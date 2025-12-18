@@ -1,3 +1,4 @@
+import 'package:damh_flutter/screens/home.dart';
 import 'package:damh_flutter/screens/login_screen.dart';
 import 'package:flutter/material.dart';
 void main() {
@@ -10,9 +11,10 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Demo App',
       theme: ThemeData(primarySwatch: Colors.blue),
-      initialRoute: '/login',
+      initialRoute: '/',
       routes: {
-        '/login': (context) => LoginScreen(),
+        '/home': (context) => Home(),
+        '/': (context) => LoginScreen(),
       },
     );
   }

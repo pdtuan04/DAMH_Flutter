@@ -51,23 +51,37 @@ namespace Libs.Repositories
 
             foreach (var ct in baiThi.ChiTietBaiThis)
             {
-                var userAnswer = answers.ContainsKey(ct.Id) ? answers[ct.Id] : null;
-                var isCorrect = !string.IsNullOrEmpty(userAnswer) && ct.CauHoi.DapAnDung == userAnswer[0];
+                // 1. Lấy câu trả lời từ người dùng (loại bỏ khoảng trắng)
+                var userAnswerStr = answers.ContainsKey(ct.Id) ? answers[ct.Id]?.Trim().ToUpper() : null;
+
+                // 2. Chuyển đổi sang char an toàn cho Model KetQuaBaiThi
+                // Nếu chuỗi không rỗng, lấy ký tự đầu tiên [0], ngược lại dùng khoảng trắng ' '
+                char userChar = !string.IsNullOrEmpty(userAnswerStr) ? userAnswerStr[0] : ' ';
+
+                // 3. Lấy đáp án đúng từ câu hỏi (Giả sử ct.CauHoi.DapAnDung trả về char hoặc string)
+                // Nếu là string, chúng ta cũng lấy [0]. Nếu đã là char thì dùng luôn.
+                char correctChar = ct.CauHoi.DapAnDung.ToString().Trim().ToUpper()[0];
+
+                // 4. So sánh đúng sai
+                bool isCorrect = (userChar != ' ') && (userChar == correctChar);
 
                 ketQuaList.Add(new KetQuaBaiThi
                 {
                     CauHoiId = ct.CauHoiId,
-                    CauTraLoi = string.IsNullOrEmpty(userAnswer) ? ' ' : userAnswer[0],
-                    DapAnDung = ct.CauHoi.DapAnDung,
-                    DungSai = !isCorrect
+                    CauTraLoi = userChar,   // Gán char cho thuộc tính char
+                    DapAnDung = correctChar, // Gán char cho thuộc tính char
+                    DungSai = isCorrect      // Đúng thì gán true
                 });
             }
 
-            int totalCorrect = ketQuaList.Count(kq => !kq.DungSai);
-            float diem = totalCorrect * 10f / baiThi.ChiTietBaiThis.Count;
+            // 5. Tính toán kết quả dựa trên logic DungSai mới
+            int totalCorrect = ketQuaList.Count(kq => kq.DungSai); // Đếm câu có DungSai == true
+
+            float diem = totalCorrect;
+            int tongSoCau = baiThi.ChiTietBaiThis.Count;
             int diemToiThieu = baiThi.ChiTietBaiThis.FirstOrDefault()?.CauHoi?.LoaiBangLai?.DiemToiThieu ?? 0;
 
-            return (ketQuaList, diem, baiThi.ChiTietBaiThis.Count, diemToiThieu);
+            return (ketQuaList, diem, tongSoCau, diemToiThieu);
         }
 
         public async Task<BaiThi> CreateDeThiNgauNhienTheoChuDe(Guid loaiBangLaiId, Guid chuDeId, List<CauHoi> cauHois)
@@ -219,10 +233,9 @@ namespace Libs.Repositories
             var (ketQuaList, diem, tongSoCau, diemToiThieu) = ChamDiem(baiThi, request.Answers);
             var ketQua = diem >= diemToiThieu ? "Đậu" : "Không Đạt";
 
-            int soCauDung = ketQuaList.Count(kq => !kq.DungSai);
+            int soCauDung = ketQuaList.Count(kq => kq.DungSai);
 
-            bool macLoiNghiemTrong = ketQuaList.Any(kq =>
-                kq.DungSai && baiThi.ChiTietBaiThis.First(ct => ct.CauHoiId == kq.CauHoiId).CauHoi.DiemLiet);
+            bool macLoiNghiemTrong = ketQuaList.Any(kq => !kq.DungSai && baiThi.ChiTietBaiThis.First(ct => ct.CauHoiId == kq.CauHoiId).CauHoi.DiemLiet);
 
             int soCauLoiNghiemTrong = ketQuaList.Count(kq =>
                 kq.DungSai && baiThi.ChiTietBaiThis.First(ct => ct.CauHoiId == kq.CauHoiId).CauHoi.DiemLiet);
@@ -254,7 +267,7 @@ namespace Libs.Repositories
                 TenBaiThi = baiThi.TenBaiThi.Length > 100 ? baiThi.TenBaiThi[..100] : baiThi.TenBaiThi,
                 NgayThi = DateTime.Now,
                 TongSoCau = tongSoCau,
-                SoCauDung = ketQuaList.Count(k => !k.DungSai),
+                SoCauDung = ketQuaList.Count(k => k.DungSai),
                 PhanTramDung = diem * 10,
                 Diem = (int)diem,
                 KetQua = ketQua.Length > 20 ? ketQua[..20] : ketQua,

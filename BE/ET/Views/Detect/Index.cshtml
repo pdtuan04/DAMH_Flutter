@@ -1,0 +1,210 @@
+﻿@*
+    For more information on enabling MVC for empty projects, visit https://go.microsoft.com/fwlink/?LinkID=397860
+*@
+@{
+}
+
+<style>
+    #mainContainer {
+        display: flex;
+        align-items: flex-start;
+        margin-top: 15px;
+    }
+
+    #legend {
+        width: 250px;
+        margin-right: 20px;
+        padding: 10px;
+        border: 1px solid #ccc;
+        background-color: #f9f9f9;
+        min-height: 400px; /* Thêm min-height để cao hơn lúc mới load */
+        max-height: 300px; /* Tăng max-height một chút để dài ra */
+        overflow-y: auto;
+    }
+
+        #legend ul {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+        }
+
+        #legend li {
+            display: flex;
+            align-items: center;
+            margin-bottom: 8px;
+            font-size: 16px;
+            font-weight: bold;
+        }
+
+        #legend .color-box {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            margin-right: 10px;
+            border: 1px solid #000;
+        }
+
+    #canvasContainer {
+        width: 600px;
+        border: 1px solid #ccc;
+    }
+
+    #canvas {
+        width: 100%;
+        height: auto;
+        display: block;
+    }
+</style>
+
+<h2>Nhận Diện Biển Báo</h2>
+
+<input type="file" id="fileInput" accept="image/*" />
+<button id="btnDetect">Detect</button>
+
+<div id="mainContainer">
+    <div id="legend"></div>
+    <div id="canvasContainer">
+        <canvas id="canvas"></canvas>
+    </div>
+</div>
+
+<script>
+    const canvas = document.getElementById("canvas");
+    const ctx = canvas.getContext("2d");
+    const legend = document.getElementById("legend");
+    const canvasContainer = document.getElementById("canvasContainer");
+
+    let uploadedImage = null;
+
+    function randomColor() {
+        return "hsl(" + Math.floor(Math.random() * 360) + ", 90%, 50%)";
+    }
+
+    function drawDetections(image, detections) {
+        // Set canvas to *real resolution* của ảnh
+        canvas.width = image.naturalWidth;
+        canvas.height = image.naturalHeight;
+
+        // Tính scale factor (display width / canvas width)
+        const displayWidth = canvasContainer.offsetWidth;
+        const scale = displayWidth / canvas.width;
+
+        // Desired sizes in screen pixels
+        const desiredBoxLineWidth = 3;
+        const desiredFontSize = 22;
+        const desiredTextLineWidth = 4;
+        const desiredXOffset = 5;
+        const desiredYOffset = desiredFontSize; // Để chữ nằm ngay dưới cạnh trên
+
+        // Scale to canvas coordinates
+        const boxLineWidth = desiredBoxLineWidth / scale;
+        const fontSize = desiredFontSize / scale;
+        const textLineWidth = desiredTextLineWidth / scale;
+        const xOffset = desiredXOffset / scale;
+        const yOffset = desiredYOffset / scale;
+
+        ctx.drawImage(image, 0, 0);
+
+        // Tạo map label -> color để thống nhất màu cho cùng label
+        const colors = {};
+        detections.forEach(d => {
+            if (!colors[d.label]) {
+                colors[d.label] = randomColor();
+            }
+        });
+
+        // Vẽ bounding boxes và số
+        detections.forEach((d, index) => {
+            const num = index + 1;
+            const color = colors[d.label];
+
+            const x = d.bBox.x;
+            const y = d.bBox.y;
+            const w = d.bBox.width;
+            const h = d.bBox.height;
+
+            ctx.strokeStyle = color;
+            ctx.lineWidth = boxLineWidth;
+            ctx.strokeRect(x, y, w, h);
+
+            // Vẽ số bên trong box, góc trên trái
+            ctx.font = `bold ${fontSize}px Arial`;
+            ctx.lineWidth = textLineWidth;
+            ctx.strokeStyle = "black";
+            ctx.strokeText(num, x + xOffset, y + yOffset);
+
+            ctx.fillStyle = color;
+            ctx.fillText(num, x + xOffset, y + yOffset);
+        });
+
+        // Xóa legend cũ và tạo mới
+        legend.innerHTML = '<h3>Detected Objects</h3><ul></ul>';
+        const ul = legend.querySelector('ul');
+
+        // List detections với số
+        detections.forEach((d, index) => {
+            const num = index + 1;
+            const color = colors[d.label];
+            const text = `${d.label} (${(d.confidence * 100).toFixed(1)}%)`;
+
+            const li = document.createElement('li');
+            li.innerHTML = `<span class="color-box" style="background-color: ${color};"></span> ${num}. ${text}`;
+            ul.appendChild(li);
+        });
+    }
+
+    document.getElementById("fileInput").addEventListener("change", event => {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        const url = URL.createObjectURL(file);
+
+        uploadedImage = new Image();
+        uploadedImage.src = url;
+
+        uploadedImage.onload = () => {
+            canvas.width = uploadedImage.naturalWidth;
+            canvas.height = uploadedImage.naturalHeight;
+            ctx.drawImage(uploadedImage, 0, 0);
+            // Xóa legend khi upload ảnh mới
+            legend.innerHTML = '';
+        };
+    });
+
+    document.getElementById("btnDetect").addEventListener("click", () => {
+        const file = document.getElementById("fileInput").files[0];
+        if (!file) {
+            alert("Vui lòng chọn ảnh.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+
+        fetch("/api/detect/detect-sign", {
+            method: "POST",
+            body: formData
+        })
+            .then(async res => {
+                if (!res.ok) {
+                    throw new Error("API Error: " + await res.text());
+                }
+
+                const text = await res.text();
+                if (!text.trim()) throw new Error("API trả về rỗng!");
+
+                return JSON.parse(text);
+            })
+            .then(json => {
+                if (!json.data || json.data.length === 0) {
+                    alert("Không phát hiện vật thể nào.");
+                    return;
+                }
+
+                drawDetections(uploadedImage, json.data);
+            })
+            .catch(err => {
+                alert("Lỗi API detect: " + err.message);
+            });
+    });
+</script>

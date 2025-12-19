@@ -1,5 +1,4 @@
 import 'package:damh_flutter/models/login.dart';
-import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
@@ -31,12 +30,12 @@ class LoginState extends State<LoginScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Email"),
+                const Text("Username"),
                 const SizedBox(height: 10),
                 TextFormField(
                   controller: userController,
-                  decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "Nhập email"),
-                  validator: (value) => (value == null || value.isEmpty) ? "Vui Lòng Nhập Email" : null,
+                  decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "Nhập username"),
+                  validator: (value) => (value == null || value.isEmpty) ? "Vui Lòng Nhập Username" : null,
                 ),
                 const SizedBox(height: 20),
                 const Text("Password"),
@@ -56,7 +55,19 @@ class LoginState extends State<LoginScreen> {
                     onPressed: _handleLogin,
                     child: const Text("Đăng Nhập"),
                   ),
-                )
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Text("Bạn chưa có tài khoản? "),
+                    TextButton(
+                      onPressed: () {
+                        Navigator.pushNamed(context, "/register");
+                      },
+                      child: const Text("Đăng ký tại đây"),
+                    )
+                  ],
+                ),
               ],
             ),
           ),

@@ -101,5 +101,9 @@ namespace Libs.Service
             await _dbContext.SaveChangesAsync();
             return true;
         }
+        public async Task<List<CauHoi>> GetCauHoisOnTapTheoChuDeAsync(Guid chuDeId, Guid LoaiBangLaiId)
+        {
+            return await _cauHoiRepository.GetCauHoisOnTapTheoChuDeAsync(chuDeId, LoaiBangLaiId);
+        }
     }
 }

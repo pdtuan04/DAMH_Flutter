@@ -1,22 +1,25 @@
 class CauHoi {
   final String id;
   final String noiDung;
-  final String? luaChonA;
-  final String? luaChonB;
+  final String luaChonA;
+  final String luaChonB;
   final String? luaChonC;
   final String? luaChonD;
   final String dapAnDung;
   final String? mediaUrl;
-
+  final String? giaiThich;
+  //final bool diemLiet;
   CauHoi({
     required this.id,
     required this.noiDung,
-    this.luaChonA,
-    this.luaChonB,
+    required this.luaChonA,
+    required this.luaChonB,
     this.luaChonC,
     this.luaChonD,
     required this.dapAnDung,
     this.mediaUrl,
+    this.giaiThich,
+    //required this.diemLiet,
   });
 
   factory CauHoi.fromJson(Map<String, dynamic> json) {
@@ -29,6 +32,8 @@ class CauHoi {
       luaChonD: json['luaChonD'],
       dapAnDung: json['dapAnDung'],
       mediaUrl: json['mediaUrl'],
+      giaiThich: json['giaiThich'],
+      //diemLiet: json
     );
   }
 }

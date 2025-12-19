@@ -15,6 +15,7 @@ namespace Libs.Repositories
         Task<List<CauHoi>> GetAllCauHoiAsync();
         Task<CauHoi> GetCauHoiByIdAsync(Guid id);
         public Task<PageList<CauHoi>> GetPagedCauHoi(int pageNumber, int pageSize, string? search, string? sortCol, string? sortDir);
+        Task<List<CauHoi>> GetCauHoisOnTapTheoChuDeAsync(Guid chuDeId, Guid LoaiBangLaiId);
     }
 
     public class CauHoiRepository : RepositoryBase<CauHoi>, ICauHoiRepository
@@ -35,6 +36,8 @@ namespace Libs.Repositories
         {
             return await _dbContext.CauHois.FirstOrDefaultAsync(x => x.Id == id);
         }
+
+
         public async Task<PageList<CauHoi>> GetPagedCauHoi(int pageNumber, int pageSize, string? search, string? sortCol, string? sortDir)
         {
             IQueryable<CauHoi> CauHoiQuery = _dbContext.CauHois.AsQueryable();
@@ -61,6 +64,13 @@ namespace Libs.Repositories
             }
             var CauHois = await PageList<CauHoi>.CreatePageAsync(CauHoiQuery, pageNumber, pageSize);
             return CauHois;
+        }
+
+        public async Task<List<CauHoi>> GetCauHoisOnTapTheoChuDeAsync(Guid chuDeId, Guid LoaiBangLaiId)
+        {
+            var cauHois = await _dbContext.CauHois
+                 .Where(cauHoi => cauHoi.LoaiBangLaiId == LoaiBangLaiId && cauHoi.ChuDeId == chuDeId).ToListAsync();
+            return cauHois;
         }
     }
 }

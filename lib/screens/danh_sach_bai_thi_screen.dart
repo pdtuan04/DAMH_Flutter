@@ -1,7 +1,9 @@
-import 'package:damh_flutter/screens/lam_bai_thi_screen.dart';
 import 'package:flutter/material.dart';
 import '../models/bai_thi.dart';
+import '../models/loai_bang_lai.dart';
 import '../services/bai_thi_api.dart';
+import '../services/loai_bang_lai_api.dart';
+import 'lam_bai_thi_screen.dart';
 
 class DanhSachBaiThiScreen extends StatefulWidget {
   const DanhSachBaiThiScreen({super.key});
@@ -12,141 +14,152 @@ class DanhSachBaiThiScreen extends StatefulWidget {
 
 class _DanhSachBaiThiScreenState extends State<DanhSachBaiThiScreen> {
   late Future<List<BaiThi>> _baiThiFuture;
+  late Future<List<LoaiBangLai>> _loaiBangLaiFuture;
+  String? _selectedLoaiBangLaiId; // ID đang được chọn (null nghĩa là Tất cả)
 
   @override
   void initState() {
     super.initState();
-    _loadBaiThi();
+    _loadAllBaiThi(); // Mặc định tải tất cả bài thi khi vào trang
+    _loadAllLoaiBangLai();
   }
 
-  void _loadBaiThi() {
+  void _loadAllBaiThi() {
     setState(() {
+      _selectedLoaiBangLaiId = null;
       _baiThiFuture = ApiBaiThiService.getAll();
+    });
+  }
+
+  void _loadAllLoaiBangLai() {
+    _loaiBangLaiFuture = ApiLoaiBangLaiService.getAll();
+  }
+
+  void _loadBaiThiByLoaiBangLai(String idLoaiBangLai) {
+    setState(() {
+      _selectedLoaiBangLaiId = idLoaiBangLai;
+      _baiThiFuture = ApiBaiThiService.getByLoaiBangLaiId(idLoaiBangLai);
     });
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Danh sách bài thi'),
+      backgroundColor: Colors.grey[100], // Nền xám nhạt cho chuyên nghiệp
+      body: Column(
+        children: [
+          // Phần Combobox lọc bài thi
+          _buildFilterSection(),
+
+          // Danh sách bài thi
+          Expanded(child: _buildListBaiThi()),
+        ],
       ),
+    );
+  }
 
-      body: FutureBuilder<List<BaiThi>>(
-        future: _baiThiFuture,
+  // Widget xây dựng bộ lọc Dropdown
+  Widget _buildFilterSection() {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      color: Colors.white,
+      child: FutureBuilder<List<LoaiBangLai>>(
+        future: _loaiBangLaiFuture,
         builder: (context, snapshot) {
+          // Khởi tạo danh sách mặc định
+          List<DropdownMenuItem<String>> menuItems = [
+            const DropdownMenuItem(value: null, child: Text("Tất cả bài thi")),
+          ];
 
-          // 1️⃣ Đang loading
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CircularProgressIndicator(),
-                  SizedBox(height: 16),
-                  Text('Đang tải danh sách bài thi...'),
-                ],
-              ),
-            );
-          }
-
-          // 2️⃣ Có lỗi
           if (snapshot.hasError) {
-            return Center(
-              child: Padding(
-                padding: const EdgeInsets.all(20),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.error_outline,
-                        size: 60, color: Colors.red),
-                    const SizedBox(height: 16),
-                    Text(
-                      'Lỗi: ${snapshot.error}',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(color: Colors.red),
-                    ),
-                    const SizedBox(height: 16),
-                    ElevatedButton.icon(
-                      onPressed: _loadBaiThi,
-                      icon: const Icon(Icons.refresh),
-                      label: const Text('Thử lại'),
-                    ),
-                  ],
-                ),
-              ),
-            );
+            return Text("Lỗi tải hạng xe"); // Hiển thị nếu có lỗi API
           }
 
-          // 3️⃣ Không có dữ liệu
-          if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(Icons.assignment_outlined,
-                      size: 80, color: Colors.grey),
-                  SizedBox(height: 16),
-                  Text(
-                    'Chưa có bài thi nào',
-                    style: TextStyle(fontSize: 18, color: Colors.grey),
-                  ),
-                ],
-              ),
-            );
-          }
-
-          // 4️⃣ Có dữ liệu
-          final baiThis = snapshot.data!;
-
-          return ListView.builder(
-            padding: const EdgeInsets.all(8),
-            itemCount: baiThis.length,
-            itemBuilder: (context, index) {
-              final baiThi = baiThis[index];
-
-              return Card(
-                elevation: 2,
-                margin:
-                const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 8,
-                  ),
-
-                  // Tên bài thi
-                  title: Text(
-                    baiThi.tenBaiThi,
-                    style: const TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 16,
-                    ),
-                  ),
-
-                  // Số câu hỏi
-                  subtitle: Text(
-                    'Số câu hỏi: ${baiThi.chiTietBaiThis.length}',
-                  ),
-
-                  trailing: const Icon(Icons.arrow_forward_ios, size: 16),
-
-                  onTap: () {
-                    // TODO: chuyển sang màn chi tiết bài thi
-                    // Navigator.push(...)
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (_) => LamBaiThiScreen(baiThiId: baiThi.id),
-                      ),
-                    );
-                  },
-                ),
+          if (snapshot.hasData) {
+            // Thêm các hạng xe lấy được từ API
+            menuItems.addAll(snapshot.data!.map((loai) {
+              return DropdownMenuItem(
+                  value: loai.id,
+                  child: Text("Hạng ${loai.tenLoai}")
               );
+            }).toList());
+          }
+
+          return DropdownButtonFormField<String>(
+            // ... giữ nguyên các phần decoration
+            value: _selectedLoaiBangLaiId,
+            items: menuItems,
+            onChanged: (value) {
+              if (value == null) {
+                _loadAllBaiThi();
+              } else {
+                _loadBaiThiByLoaiBangLai(value);
+              }
             },
           );
         },
       ),
+    );
+  }
+
+  // Widget xây dựng danh sách bài thi bằng FutureBuilder
+  Widget _buildListBaiThi() {
+    return FutureBuilder<List<BaiThi>>(
+      future: _baiThiFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator());
+        }
+        if (snapshot.hasError) {
+          return Center(child: Text('Lỗi: ${snapshot.error}'));
+        }
+        if (!snapshot.hasData || snapshot.data!.isEmpty) {
+          return const Center(child: Text('Không có bài thi nào cho hạng này.'));
+        }
+
+        final baiThis = snapshot.data!;
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(vertical: 10),
+          itemCount: baiThis.length,
+          itemBuilder: (context, index) {
+            final baiThi = baiThis[index];
+            return Card(
+              margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+              elevation: 3,
+              child: ListTile(
+                leading: Container(
+                  padding: const EdgeInsets.all(10),
+                  decoration: BoxDecoration(
+                    color: Colors.indigo.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(Icons.assignment, color: Colors.indigo),
+                ),
+                title: Text(
+                  baiThi.tenBaiThi,
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+                subtitle: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 5),
+                    Text('Số lượng: ${baiThi.chiTietBaiThis.length} câu hỏi'),
+                    Text('Thời gian: 20 phút', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                  ],
+                ),
+                trailing: const Icon(Icons.play_circle_fill, color: Colors.orange, size: 35),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => LamBaiThiScreen(baiThiId: baiThi.id)),
+                  );
+                },
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

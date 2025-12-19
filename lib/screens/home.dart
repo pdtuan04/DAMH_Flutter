@@ -1,3 +1,4 @@
+import 'package:damh_flutter/screens/on_tap_theo_chu_de_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'danh_sach_bai_thi_screen.dart';
@@ -15,11 +16,13 @@ class _HomeState extends State<Home> {
 
   final List<Widget> _screens = const [
     DanhSachBaiThiScreen(),
+    OnTapTheoChuDeScreen(),
     ProfileScreen(),
   ];
 
   final List<String> _titles = const [
     'Thi Thử',
+    'OnTap',
     'Profile',
   ];
 
@@ -59,6 +62,7 @@ class _HomeState extends State<Home> {
         onTap: _onItemTapped,
         items: const [
           BottomNavigationBarItem(icon: Icon(Icons.assignment), label: 'Thi thử'),
+          BottomNavigationBarItem(icon: Icon(Icons.assignment), label: 'Ôn tập'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Cá nhân'),
         ],
       ),

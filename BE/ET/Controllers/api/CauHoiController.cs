@@ -102,6 +102,15 @@ namespace ET.Controllers.api
 
             return Ok(new { status = true, message = "Xóa câu hỏi thành công" });
         }
-     
+        [HttpGet("get-cau-hoi-on-theo-chu-de")]
+        public async Task<IActionResult> GetCauHoiOnTheoChuDe(Guid chuDeId, Guid loaiBangLaiId)
+        {
+            var result = await _cauHoiService.GetCauHoisOnTapTheoChuDeAsync(chuDeId, loaiBangLaiId);
+            if (result ==null)
+            {
+                return NotFound(new { status = false, message = "Câu hỏi không tìm thấy" });
+            }
+            return Ok(new { status = true, message = "Lấy câu hỏi ôn tập theo chủ đề thành công", data = result });
+        }
     }
 }

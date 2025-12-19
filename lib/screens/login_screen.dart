@@ -1,72 +1,126 @@
 import 'package:damh_flutter/models/login.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
-
 import '../services/authenticate.dart';
 
-class LoginScreen extends StatefulWidget{
+class LoginScreen extends StatefulWidget {
   @override
   State<LoginScreen> createState() => LoginState();
 }
+
 class LoginState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final TextEditingController userController = TextEditingController();
   final TextEditingController passController = TextEditingController();
-
-  bool _isLoading = false; // Thêm biến loading
+  bool _isLoading = false;
+  bool _obscureText = true; // Để ẩn/hiện mật khẩu
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        centerTitle: true,
-        title: const Text("Đăng Nhập"),
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(19),
-        child: Form(
-          key: _formKey,
-          child: SingleChildScrollView( // Nên bọc thêm cái này để tránh lỗi tràn màn hình khi hiện bàn phím
+      // Background gradient gợi liên tưởng đến bầu trời/đường cao tốc
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [Colors.indigo, Colors.blueAccent],
+          ),
+        ),
+        child: Center(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(24),
             child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text("Username"),
+                // Biểu tượng chủ đề giao thông
+                const Icon(Icons.traffic_rounded, size: 80, color: Colors.yellowAccent),
                 const SizedBox(height: 10),
-                TextFormField(
-                  controller: userController,
-                  decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "Nhập username"),
-                  validator: (value) => (value == null || value.isEmpty) ? "Vui Lòng Nhập Username" : null,
-                ),
-                const SizedBox(height: 20),
-                const Text("Password"),
-                const SizedBox(height: 10),
-                TextFormField(
-                  controller: passController,
-                  obscureText: true, // Ẩn mật khẩu
-                  decoration: const InputDecoration(border: OutlineInputBorder(), hintText: "Nhập mật khẩu"),
-                  validator: (value) => (value == null || value.isEmpty) ? "Vui Lòng Nhập Mật Khẩu" : null,
-                ),
-                const SizedBox(height: 30),
-                Center(
-                  child: _isLoading
-                      ? const CircularProgressIndicator() // Hiện loading khi đang gọi API
-                      : ElevatedButton(
-                    style: ElevatedButton.styleFrom(minimumSize: const Size(200, 50)),
-                    onPressed: _handleLogin,
-                    child: const Text("Đăng Nhập"),
+                const Text(
+                  "ÔN THI GIẤY PHÉP LÁI XE",
+                  style: TextStyle(
+                    color: Colors.white,
+                    fontSize: 22,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 1.2,
                   ),
                 ),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Text("Bạn chưa có tài khoản? "),
-                    TextButton(
-                      onPressed: () {
-                        Navigator.pushNamed(context, "/register");
-                      },
-                      child: const Text("Đăng ký tại đây"),
-                    )
-                  ],
+                const SizedBox(height: 30),
+
+                // Form đăng nhập bọc trong Card
+                Card(
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+                  elevation: 8,
+                  child: Padding(
+                    padding: const EdgeInsets.all(20),
+                    child: Form(
+                      key: _formKey,
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.stretch,
+                        children: [
+                          const Text(
+                            "Đăng Nhập Hệ Thống",
+                            textAlign: TextAlign.center,
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Colors.indigo),
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Username
+                          TextFormField(
+                            controller: userController,
+                            decoration: InputDecoration(
+                              labelText: "Tên đăng nhập",
+                              prefixIcon: const Icon(Icons.person),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            validator: (value) => (value == null || value.isEmpty) ? "Vui lòng nhập tên" : null,
+                          ),
+                          const SizedBox(height: 20),
+
+                          // Password
+                          TextFormField(
+                            controller: passController,
+                            obscureText: _obscureText,
+                            decoration: InputDecoration(
+                              labelText: "Mật khẩu",
+                              prefixIcon: const Icon(Icons.lock),
+                              suffixIcon: IconButton(
+                                icon: Icon(_obscureText ? Icons.visibility : Icons.visibility_off),
+                                onPressed: () => setState(() => _obscureText = !_obscureText),
+                              ),
+                              border: OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            validator: (value) => (value == null || value.isEmpty) ? "Vui lòng nhập mật khẩu" : null,
+                          ),
+                          const SizedBox(height: 30),
+
+                          // Nút đăng nhập
+                          _isLoading
+                              ? const Center(child: CircularProgressIndicator())
+                              : ElevatedButton(
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.orangeAccent,
+                              foregroundColor: Colors.white,
+                              minimumSize: const Size(double.infinity, 55),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                              elevation: 5,
+                            ),
+                            onPressed: _handleLogin,
+                            child: const Text("VÀO THI NGAY", style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                const SizedBox(height: 20),
+                // Nút đăng ký
+                TextButton(
+                  onPressed: () => Navigator.pushNamed(context, "/register"),
+                  child: const Text(
+                    "Chưa có tài khoản? Đăng ký tại đây",
+                    style: TextStyle(color: Colors.white, decoration: TextDecoration.underline),
+                  ),
                 ),
               ],
             ),
@@ -76,46 +130,31 @@ class LoginState extends State<LoginScreen> {
     );
   }
 
-  // Tách hàm xử lý đăng nhập để code sạch hơn
+  // Giữ nguyên hàm _handleLogin của bạn
   Future<void> _handleLogin() async {
     if (_formKey.currentState!.validate()) {
-      setState(() { _isLoading = true; }); // Bắt đầu loading
-
+      setState(() { _isLoading = true; });
       try {
-        final request = LoginRequest(
-            username: userController.text,
-            password: passController.text
-        );
-
-        // Đợi kết quả từ API
+        final request = LoginRequest(username: userController.text, password: passController.text);
         final response = await Authenticate.login(request);
-
         if (response.status == true) {
-          // Lưu token vào máy để các API sau dùng
           const storage = FlutterSecureStorage();
           await storage.write(key: 'jwt_token', value: response.token);
-
-          if (mounted) {
-            Navigator.pushReplacementNamed(context, "/home");
-          }
+          if (mounted) Navigator.pushReplacementNamed(context, "/home");
         } else {
-          // Đăng nhập thất bại (sai pass/user)
           _showError(response.message);
         }
       } catch (e) {
-        // Lỗi kết nối hoặc lỗi Exception từ Service
         _showError(e.toString().replaceAll("Exception: ", ""));
       } finally {
-        if (mounted) {
-          setState(() { _isLoading = false; }); // Tắt loading
-        }
+        if (mounted) setState(() { _isLoading = false; });
       }
     }
   }
 
   void _showError(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(content: Text(message), backgroundColor: Colors.red),
+      SnackBar(content: Text(message), backgroundColor: Colors.redAccent, behavior: SnackBarBehavior.floating),
     );
   }
 }

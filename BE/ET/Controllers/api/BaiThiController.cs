@@ -474,7 +474,30 @@ namespace ET.Controllers.api
                 return NotFound("Không tìm thấy loại bằng lái.");
 
             var danhSachDeThi = await _baiThiService.GetDeThiByLoaiBangLai(loaiBangLaiId);
-            return Ok(danhSachDeThi);
+
+            // ✅ CHỈ TRẢ VỀ DỮ LIỆU CẦN THIẾT
+            var result = danhSachDeThi.Select(bt => new
+            {
+                bt.Id,
+                bt.TenBaiThi,
+                ChiTietBaiThis = bt.ChiTietBaiThis?.Select(ct => new
+                {
+                    ct.Id,
+                    CauHoi = ct.CauHoi != null ? new
+                    {
+                        ct.CauHoi.Id,
+                        ct.CauHoi.NoiDung,
+                        ct.CauHoi.LuaChonA,
+                        ct.CauHoi.LuaChonB,
+                        ct.CauHoi.LuaChonC,
+                        ct.CauHoi.LuaChonD,
+                        ct.CauHoi.DapAnDung,
+                        ct.CauHoi.MediaUrl
+                    } : null
+                }).ToList()
+            }).ToList();
+
+            return Ok(result);
         }
     }
 }

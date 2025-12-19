@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:damh_flutter/models/bai_thi.dart';
 import 'package:damh_flutter/models/login.dart';
+import 'package:damh_flutter/models/register.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
@@ -23,6 +24,23 @@ class Authenticate{
         throw Exception(errorData['message'] ?? 'Lỗi đăng nhập');
       }
     } catch (e) {
+      throw Exception("Lỗi kết nối mạng");
+    }
+  }
+  static Future<bool> register(RegisterRequest request) async{
+    try{
+      final res = await http.post(
+        Uri.parse('$baseUrl/register'),
+        headers: {'Content-Type': 'application/json'},
+        body: json.encode(request.toJson())
+      );
+      if(res.statusCode == 200){
+        return true;
+      }else{
+        final errorData = jsonDecode(res.body);
+        throw Exception(errorData['message'] ?? 'Lỗi đăng ký');
+      }
+    }catch(e){
       throw Exception("Lỗi kết nối mạng");
     }
   }

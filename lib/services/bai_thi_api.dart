@@ -27,6 +27,33 @@ class ApiBaiThiService{
       throw Exception("Lỗi kết nối mạng");
     }
   }
+  static Future<List<BaiThi>> getByLoaiBangLaiId(String id) async {
+    try {
+      // 1. Sửa URL: Bỏ dấu ngoặc nhọn {} và dấu nháy kép dư thừa
+      // URL đúng phải là: .../api/BaiThi/de-thi-by-id-lblai/id_cua_ban
+      final url = Uri.parse('$baseUrl/de-thi-by-id-lblai/$id');
+
+      final res = await http.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (res.statusCode == 200) {
+        // 2. Ép kiểu dữ liệu JSON sang List trước khi map
+        final List<dynamic> jsonList = json.decode(res.body);
+
+        return jsonList.map((e) => BaiThi.fromJson(e)).toList();
+      } else {
+        // 3. Trả về thông báo lỗi từ Server nếu có
+        final errorData = json.decode(res.body);
+        throw Exception(errorData['message'] ?? 'Không thể tải danh sách đề thi');
+      }
+    } catch (e) {
+      // In ra console để bạn dễ dàng debug khi chạy app
+      print("Lỗi API getByLoaiBangLaiId: $e");
+      throw Exception("Lỗi kết nối mạng: $e");
+    }
+  }
   static Future<BaiThi> getById(String id) async {
     try {
       final res = await http.get(

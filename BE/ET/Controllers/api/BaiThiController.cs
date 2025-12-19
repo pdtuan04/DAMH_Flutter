@@ -466,5 +466,15 @@ namespace ET.Controllers.api
                 return StatusCode(500, new { success = false, message = "Lỗi khi tải dữ liệu bằng lái và chủ đề.", error = ex.Message });
             }
         }
+        [HttpGet("de-thi-by-id-lblai/{loaiBangLaiId}")]
+        public async Task<IActionResult> GetDeThiByIdLoaiBangLai(Guid loaiBangLaiId)
+        {
+            var loaiBangLai = await _loaiBangLaiService.GetByIdAsync(loaiBangLaiId);
+            if (loaiBangLai == null)
+                return NotFound("Không tìm thấy loại bằng lái.");
+
+            var danhSachDeThi = await _baiThiService.GetDeThiByLoaiBangLai(loaiBangLaiId);
+            return Ok(danhSachDeThi);
+        }
     }
 }

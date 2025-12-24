@@ -1,4 +1,5 @@
 import 'package:carousel_slider_plus/carousel_slider_plus.dart';
+import 'package:damh_flutter/screens/danh_sach_mo_phong.dart';
 import 'package:damh_flutter/screens/on_tap_theo_chu_de_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -21,13 +22,15 @@ class _HomeState extends State<Home> {
     HomeScreen(),
     DanhSachBaiThiScreen(),
     OnTapTheoChuDeScreen(),
+    DanhSachMoPhongScreen(),
     ProfileScreen(),
   ];
 
   final List<String> _titles = const [
-    'Trang chủ',
+    'Trang Chủ',
     'Thi Thử',
-    'OnTap',
+    'Ôn Tập',
+    'Mô Phỏng',
     'Profile',
   ];
 
@@ -70,6 +73,7 @@ class _HomeState extends State<Home> {
           BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang chủ'),
           BottomNavigationBarItem(icon: Icon(Icons.assignment), label: 'Thi thử'),
           BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Ôn tập'),
+          BottomNavigationBarItem(icon: Icon(Icons.directions_car), label: 'Mô phỏng'),
           BottomNavigationBarItem(icon: Icon(Icons.person), label: 'Cá nhân'),
         ],
       ),

@@ -3,6 +3,7 @@ import 'dart:convert';
 import 'package:damh_flutter/models/bai_thi.dart';
 import 'package:damh_flutter/models/login.dart';
 import 'package:damh_flutter/models/register.dart';
+import 'package:damh_flutter/models/user.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
 
@@ -36,6 +37,27 @@ class Authenticate{
       );
       if(res.statusCode == 200){
         return true;
+      }else{
+        final errorData = jsonDecode(res.body);
+        throw Exception(errorData['message'] ?? 'Lỗi đăng ký');
+      }
+    }catch(e){
+      throw Exception("Lỗi kết nối mạng");
+    }
+  }
+  static Future<User> userProfile() async {
+    String? token = await TokenService.getToken();
+    try{
+      final res = await http.post(
+          Uri.parse('$baseUrl/user-profile'),
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer $token',
+          },
+      );
+      if(res.statusCode == 200){
+        final jsonData = json.decode(res.body);
+        return User.fromJson(jsonData);
       }else{
         final errorData = jsonDecode(res.body);
         throw Exception(errorData['message'] ?? 'Lỗi đăng ký');

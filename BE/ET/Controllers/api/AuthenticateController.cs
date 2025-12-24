@@ -1,17 +1,19 @@
 ﻿using ET.Models;
+using ET.Services;
+using Hangfire;
 using Libs.Entity;
+using Libs.Models;
+using Libs.Service;
+using Microsoft.AspNetCore.Authentication;
+using Microsoft.AspNetCore.Authentication.Google;
 using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.IdentityModel.Tokens;
+using System.Configuration;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
 using System.Text;
-using Microsoft.AspNetCore.Identity;
-using System.Configuration;
-using ET.Services;
-using Hangfire;
-using Microsoft.AspNetCore.Authentication;
-using Microsoft.AspNetCore.Authentication.Google;
 
 namespace ETAuthApp.Controllers.api
 {
@@ -247,6 +249,26 @@ namespace ETAuthApp.Controllers.api
                                 <p>Đang chuyển hướng...</p>
                             </body>
                             </html>", "text/html");
+        }
+        [HttpPost("user-profile")]
+        public async Task<IActionResult> Profile()
+        {
+            try
+            {
+                var userId = User.FindFirstValue(ClaimTypes.NameIdentifier);
+                var user = await userManager.FindByIdAsync(userId) ?? throw new NullReferenceException("Không tin thất user này");
+                var result = new UserDTO
+                {
+                    Id = user.Id,
+                    UserName = user.UserName,
+                    Email = user.Email
+                };
+                return Ok(new { success = true, result } );
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(500, new { success = false, message = "Lỗi khi xử lý bài thi.", error = ex.Message });
+            }
         }
     }
 }

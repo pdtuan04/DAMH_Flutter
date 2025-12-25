@@ -268,7 +268,7 @@ namespace Libs.Repositories
                 NgayThi = DateTime.Now,
                 TongSoCau = tongSoCau,
                 SoCauDung = ketQuaList.Count(k => k.DungSai),
-                PhanTramDung = diem * 10,
+                PhanTramDung = tongSoCau > 0 ? ((float)ketQuaList.Count(k => k.DungSai) / tongSoCau) * 100 : 0,
                 Diem = (int)diem,
                 KetQua = ketQua.Length > 20 ? ketQua[..20] : ketQua,
                 MacLoiNghiemTrong = macLoiNghiemTrong

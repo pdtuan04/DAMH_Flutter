@@ -1,6 +1,7 @@
 import 'package:carousel_slider_plus/carousel_slider_plus.dart';
 import 'package:damh_flutter/screens/danh_sach_mo_phong.dart';
 import 'package:damh_flutter/screens/on_tap_theo_chu_de_screen.dart';
+import 'package:damh_flutter/screens/lich_su_thi_screen.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/user.dart';
@@ -99,7 +100,7 @@ class ProfileScreen extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator(color: Colors.indigo));
           } else if (snapshot.hasError) {
-            return _buildErrorState(snapshot.error.toString());
+            return _buildErrorState(context, snapshot.error.toString());
           }
 
           final user = snapshot.data!;
@@ -121,7 +122,12 @@ class ProfileScreen extends StatelessWidget {
                       const Text("HÀNH ĐỘNG",
                           style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1.2)),
                       const SizedBox(height: 16),
-                      _buildActionTile(Icons.history_rounded, "Lịch sử thi", () {}),
+                      _buildActionTile(Icons.history_rounded, "Lịch sử thi", () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(builder: (context) => const LichSuThiScreen()),
+                        );
+                      }),
                       _buildActionTile(Icons.settings_outlined, "Cài đặt ứng dụng", () {}),
 
                       const SizedBox(height: 40),
@@ -236,7 +242,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildErrorState(String error) {
+  Widget _buildErrorState(BuildContext context,String error) {
     return Center(
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
@@ -244,7 +250,14 @@ class ProfileScreen extends StatelessWidget {
           const Icon(Icons.error_outline_rounded, color: Colors.red, size: 60),
           const SizedBox(height: 16),
           const Text("Phiên đăng nhập đã hết hạn"),
-          TextButton(onPressed: () => Authenticate.userProfile(), child: const Text("Thử lại"))
+          TextButton(
+          onPressed: () {
+            // Điều hướng về màn hình login khi token hết hạn
+            TokenService.deleteToken();
+            Navigator.pushNamedAndRemoveUntil(context, "/login", (route) => false);
+          },
+          child: const Text("Đăng nhập lại")
+        )
         ],
       ),
     );

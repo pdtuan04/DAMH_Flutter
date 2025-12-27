@@ -16,6 +16,7 @@ namespace Libs.Repositories
         Task<CauHoi> GetCauHoiByIdAsync(Guid id);
         public Task<PageList<CauHoi>> GetPagedCauHoi(int pageNumber, int pageSize, string? search, string? sortCol, string? sortDir);
         Task<List<CauHoi>> GetCauHoisOnTapTheoChuDeAsync(Guid chuDeId, Guid LoaiBangLaiId);
+        Task<List<CauHoi>> CauHoiHaySai(int soLuong);
     }
 
     public class CauHoiRepository : RepositoryBase<CauHoi>, ICauHoiRepository
@@ -71,6 +72,26 @@ namespace Libs.Repositories
             var cauHois = await _dbContext.CauHois
                  .Where(cauHoi => cauHoi.LoaiBangLaiId == LoaiBangLaiId && cauHoi.ChuDeId == chuDeId).ToListAsync();
             return cauHois;
+        }
+        public async Task<List<CauHoi>> CauHoiHaySai(int soLuong)
+        {
+            var result = await _dbContext.ChiTietLichSuThis
+                .Where(c => c.DungSai == true)
+                .GroupBy(c => c.CauHoiId)
+                .Select(c => new
+                {
+                    CauHoiId = c.Key,
+                    SaiCount = c.Count()
+                })
+                .OrderByDescending(c => c.SaiCount)
+                .Take(soLuong)
+                .Select(c => c.CauHoiId)
+                .Join(_dbContext.CauHois,
+                        id => id,
+                        cauHoi => cauHoi.Id,
+                        (id, cauHoi) => cauHoi
+                ).ToListAsync();
+            return result;
         }
     }
 }

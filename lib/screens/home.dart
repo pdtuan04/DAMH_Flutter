@@ -310,7 +310,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   sub: "Thử thách mới",
                   baseColor: Colors.orange,
                   onTap: () {
-
+                    Navigator.pushNamed(context, '/random-de-thi');
                   },
                 ),
                 _buildColorfulCard(
@@ -331,7 +331,10 @@ class _HomeScreenState extends State<HomeScreen> {
                   sub: "120 tình huống",
                   baseColor: Colors.purpleAccent,
                   onTap: () {
-
+                    final homeState = context.findAncestorStateOfType<_HomeState>();
+                    if (homeState != null) {
+                      homeState._onItemTapped(3);
+                    }
                   },
                 ),
                 _buildColorfulCard(
@@ -340,7 +343,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   sub: "Ôn toàn bộ câu hỏi theo loại bằng lái",
                   baseColor: Colors.teal,
                   onTap: () {
-
+                    Navigator.pushNamed(context, '/on-toan-bo-cau-hoi');
                   },
                 ),
               ],
@@ -441,42 +444,61 @@ class _HomeScreenState extends State<HomeScreen> {
   Widget _buildSystemMistakeCard() {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16.0),
-      child: Container(
-        padding: const EdgeInsets.all(20),
-        decoration: BoxDecoration(
+      child: InkWell(
+        onTap: () {
+          Navigator.pushNamed(context, '/on-cau-hoi-hay-sai');
+        },
+        child: Container(
+          padding: const EdgeInsets.all(20),
+          decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(24),
             gradient: const LinearGradient(
               colors: [Color(0xFFF44336), Color(0xFFB71C1C)],
             ),
             boxShadow: [
-              BoxShadow(color: Colors.red.withOpacity(0.3), blurRadius: 12, offset: const Offset(0, 6))
-            ]
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: const BoxDecoration(color: Colors.white24, shape: BoxShape.circle),
-              child: const Icon(Icons.whatshot_rounded, color: Colors.white, size: 30),
-            ),
-            const SizedBox(width: 15),
-            const Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text("Top 20 câu hay sai",
-                      style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 17)),
-                  Text("Dữ liệu từ toàn bộ người dùng hệ thống",
-                      style: TextStyle(color: Colors.white70, fontSize: 12)),
-                ],
+              BoxShadow(
+                color: Colors.red.withOpacity(0.3),
+                blurRadius: 12,
+                offset: const Offset(0, 6),
+              )
+            ],
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: const BoxDecoration(
+                  color: Colors.white24,
+                  shape: BoxShape.circle,
+                ),
+                child: const Icon(Icons.whatshot_rounded,
+                    color: Colors.white, size: 30),
               ),
-            ),
-            const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 18),
-          ],
+              const SizedBox(width: 15),
+              const Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text("Top 20 câu hay sai",
+                        style: TextStyle(
+                            color: Colors.white,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 17)),
+                    Text("Dữ liệu từ toàn bộ người dùng hệ thống",
+                        style: TextStyle(
+                            color: Colors.white70, fontSize: 12)),
+                  ],
+                ),
+              ),
+              const Icon(Icons.arrow_forward_ios_rounded,
+                  color: Colors.white, size: 18),
+            ],
+          ),
         ),
       ),
     );
   }
+
 
   Widget _buildSlider() {
     return Container(

@@ -192,5 +192,9 @@ namespace Libs.Service
         {
             return await _baiThiRepository.GetByIdAsync(id); // Sử dụng phương thức async
         }
+        public async Task<BaiThi> GetRandomAsync()
+        {
+            return await _baiThiRepository.GetRandomAsync();
+        }
     }
 }

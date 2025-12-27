@@ -38,6 +38,7 @@ dependencies:
   flutter_secure_storage: ^10.0.0
   carousel_slider_plus: ^7.1.1
   video_player: ^2.10.1
+  image_picker: ^1.1.2
 dev_dependencies:
   flutter_test:
     sdk: flutter

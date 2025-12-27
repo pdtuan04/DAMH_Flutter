@@ -154,4 +154,58 @@ class ApiCauHoiService {
       throw Exception("Lỗi: $e");
     }
   }
+  static Future<List<CauHoi>> getCauHoiHaySai(int soLuong) async {
+    try {
+      final url = Uri.parse('$baseUrl/get-cau-hoi-hay-sai?soLuong=${soLuong}');
+
+      final res = await http.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (res.statusCode == 200) {
+        // 1. Giải mã body thành Map
+        final Map<String, dynamic> responseData = jsonDecode(res.body);
+
+        // 2. Lấy danh sách từ trường 'data'
+        final List<dynamic> list = responseData['data'];
+
+        return list.map((e) => CauHoi.fromJson(e)).toList();
+      } else {
+        final error = jsonDecode(res.body);
+        throw Exception(error['message'] ?? 'Lỗi không xác định khi load câu hỏi');
+      }
+    } catch (e) {
+      // Log lỗi chi tiết để debug
+      print("Lỗi API getCauHoiOnTap: $e");
+      throw Exception("Lỗi kết nối mạng hoặc sai cấu trúc dữ liệu");
+    }
+  }
+  static Future<List<CauHoi>> getAll() async {
+    try {
+      final url = Uri.parse('$baseUrl/get-all-cau-hoi');
+
+      final res = await http.get(
+        url,
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (res.statusCode == 200) {
+        // 1. Giải mã body thành Map
+        final Map<String, dynamic> responseData = jsonDecode(res.body);
+
+        // 2. Lấy danh sách từ trường 'data'
+        final List<dynamic> list = responseData['data'];
+
+        return list.map((e) => CauHoi.fromJson(e)).toList();
+      } else {
+        final error = jsonDecode(res.body);
+        throw Exception(error['message'] ?? 'Lỗi không xác định khi load câu hỏi');
+      }
+    } catch (e) {
+      // Log lỗi chi tiết để debug
+      print("Lỗi API getCauHoiOnTap: $e");
+      throw Exception("Lỗi kết nối mạng hoặc sai cấu trúc dữ liệu");
+    }
+  }
 }

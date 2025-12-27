@@ -8,7 +8,7 @@ class User{
     // Lưu ý: API của bạn trả về lồng trong object "result"
     final result = json['result'];
     return User(
-      id: json['id'],
+      id: result['id'],
       username: result['userName'] ?? '',
       email: result['email'] ?? '',
     );

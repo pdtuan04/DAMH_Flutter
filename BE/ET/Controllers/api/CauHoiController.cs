@@ -112,5 +112,15 @@ namespace ET.Controllers.api
             }
             return Ok(new { status = true, message = "Lấy câu hỏi ôn tập theo chủ đề thành công", data = result });
         }
+        [HttpGet("get-cau-hoi-hay-sai")]
+        public async Task<IActionResult> GetCauHoiOnHaySai(int soLuong)
+        {
+            var result = await _cauHoiService.CauHoiHaySai(soLuong);
+            if (result == null)
+            {
+                return NotFound(new { status = false, message = "Câu hỏi không tìm thấy" });
+            }
+            return Ok(new { status = true, message = "Lấy câu hỏi ôn tập hay sai thành công", data = result });
+        }
     }
 }

@@ -30,6 +30,7 @@ namespace Libs.Repositories
         Task SaveChangesAsync();
         Task<BaiThi> GetByIdAsync(Guid id);
         ApplicationDbContext GetDbContext();
+        Task<BaiThi> GetRandomAsync();
     }
 
     public class BaiThiRepository : RepositoryBase<BaiThi>, IBaiThiRepository
@@ -440,6 +441,16 @@ namespace Libs.Repositories
         public ApplicationDbContext GetDbContext()
         {
             return _dbContext;
+        }
+        public async Task<BaiThi> GetRandomAsync()
+        {
+            var result  = await _dbContext.BaiThis.Include(bt => bt.ChiTietBaiThis)
+                    .ThenInclude(ct => ct.CauHoi)
+                        .ThenInclude(c => c.LoaiBangLai)
+                .Include(bt => bt.ChiTietBaiThis)
+                    .ThenInclude(ct => ct.CauHoi).OrderBy(x => Guid.NewGuid()).FirstOrDefaultAsync();
+
+            return result;
         }
     }
 }

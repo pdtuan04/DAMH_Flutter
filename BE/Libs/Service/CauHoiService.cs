@@ -105,5 +105,10 @@ namespace Libs.Service
         {
             return await _cauHoiRepository.GetCauHoisOnTapTheoChuDeAsync(chuDeId, LoaiBangLaiId);
         }
+        public async Task<List<CauHoi>> CauHoiHaySai(int soLuong)
+        {
+            var cauHoi = await _cauHoiRepository.CauHoiHaySai(soLuong);
+            return cauHoi;
+        }
     }
 }

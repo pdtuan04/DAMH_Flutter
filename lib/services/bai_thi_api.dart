@@ -149,4 +149,22 @@ class ApiBaiThiService{
       throw Exception("Lỗi: $e");
     }
   }
+  static Future<BaiThi> getRandom() async {
+    try {
+      final res = await http.get(
+        Uri.parse('$baseUrl/de-thi-ngau-nhien'),
+        headers: {'Content-Type': 'application/json'},
+      );
+
+      if (res.statusCode == 200) {
+        final jsonData = json.decode(res.body);
+        return BaiThi.fromJson(jsonData);
+      } else {
+        final errorData = json.decode(res.body);
+        throw Exception(errorData['message'] ?? 'Lỗi khi tải bài thi');
+      }
+    } catch (e) {
+      throw Exception("Lỗi kết nối mạng");
+    }
+  }
 }

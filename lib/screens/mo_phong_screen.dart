@@ -112,7 +112,7 @@ class _MoPhongScreenState extends State<MoPhongScreen> {
 
     return Column(
       children: [
-        // 1. Thanh dải màu điểm (Nằm sát trên thanh chạy)
+        // Thanh dải màu điểm
         SizedBox(
           height: 15,
           width: double.infinity,
@@ -120,33 +120,33 @@ class _MoPhongScreenState extends State<MoPhongScreen> {
             painter: ScoreBarPainter(
               markers: widget.moPhong.dapAn.split(',').map((e) => double.parse(e.trim())).toList(),
               totalTime: totalTime,
-              flagTime: _flagTime,
               showColors: _hasPressed,
             ),
           ),
         ),
-        // 2. Thanh chạy thời gian thực (Slim & Clean)
+        // Thanh chạy thời gian thực
         Container(
           height: 6,
           width: double.infinity,
           color: Colors.grey[300],
           child: Stack(
+            clipBehavior: Clip.none, // Cho phép ảnh cờ hiển thị tràn ra ngoài Stack
             children: [
               FractionallySizedBox(
                 widthFactor: progress.clamp(0.0, 1.0),
                 child: Container(color: Colors.indigo),
               ),
-              // Vị trí cờ đỏ kéo dài xuống thanh chạy
-              // Vị trí cờ đỏ bằng hình ảnh
+              // HIỂN THỊ CỜ BẰNG ẢNH TẠI ĐÂY
               if (_flagTime != null)
                 Positioned(
-                  // Tính toán vị trí X y hệt như cũ để đảm bảo chính xác 100%
-                  left: (_flagTime! / totalTime) * MediaQuery.of(context).size.width - 10, // trừ 10 để căn giữa icon
-                  top: -15, // Đẩy icon cờ lên phía trên thanh màu một chút
+                  // Căn chỉnh vị trí cờ dựa trên thời gian đã bấm
+                  left: (_flagTime! / totalTime) * MediaQuery.of(context).size.width - 12.5,
+                  top: -25, // Đẩy cờ lên trên thanh tiến trình
                   child: Image.asset(
-                    'assets/images/red_flag.png', // Đường dẫn file cờ bạn tải về
+                    'assets/images/red_flag.png',
                     width: 25,
                     height: 25,
+                    fit: BoxFit.contain,
                   ),
                 ),
             ],
@@ -210,40 +210,33 @@ class _MoPhongScreenState extends State<MoPhongScreen> {
 class ScoreBarPainter extends CustomPainter {
   final List<double> markers;
   final double totalTime;
-  final double? flagTime;
   final bool showColors;
 
-  ScoreBarPainter({required this.markers, required this.totalTime, this.flagTime, required this.showColors});
+  ScoreBarPainter({
+    required this.markers,
+    required this.totalTime,
+    required this.showColors
+  });
 
   @override
   void paint(Canvas canvas, Size size) {
     if (showColors) {
+      // Vẽ dải màu tương ứng với các mốc điểm
       final colors = [Colors.green, Colors.lightGreen, Colors.yellow, Colors.orange, Colors.red];
       for (int i = 0; i < 5; i++) {
-        final paint = Paint()..color = colors[i];
-        double left = (markers[i] / totalTime) * size.width;
-        double right = (markers[i + 1] / totalTime) * size.width;
-        canvas.drawRect(Rect.fromLTRB(left, 0, right, size.height), paint);
+        if (i + 1 < markers.length) {
+          final paint = Paint()..color = colors[i];
+          double left = (markers[i] / totalTime) * size.width;
+          double right = (markers[i + 1] / totalTime) * size.width;
+          canvas.drawRect(Rect.fromLTRB(left, 0, right, size.height), paint);
+        }
       }
     }
-
-    if (flagTime != null) {
-      final flagPaint = Paint()..color = Colors.redAccent..strokeWidth = 2.5;
-      double flagPos = (flagTime! / totalTime) * size.width;
-
-      // Vẽ cờ đỏ thẳng đứng xuyên suốt dải màu
-      canvas.drawLine(Offset(flagPos, 0), Offset(flagPos, size.height), flagPaint);
-
-      // Hình tam giác cờ ở đỉnh
-      final path = Path();
-      path.moveTo(flagPos, 0);
-      path.lineTo(flagPos + 10, 4);
-      path.lineTo(flagPos, 8);
-      path.close();
-      canvas.drawPath(path, Paint()..color = Colors.redAccent);
-    }
+    // Đã xóa phần vẽ Line và Path của cờ đỏ ở đây
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => true;
+  bool shouldRepaint(covariant ScoreBarPainter oldDelegate) {
+    return oldDelegate.showColors != showColors || oldDelegate.markers != markers;
+  }
 }

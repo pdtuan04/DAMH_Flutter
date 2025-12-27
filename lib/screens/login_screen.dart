@@ -140,7 +140,13 @@ class LoginState extends State<LoginScreen> {
         if (response.status == true) {
           const storage = FlutterSecureStorage();
           await storage.write(key: 'jwt_token', value: response.token);
-          if (mounted) Navigator.pushReplacementNamed(context, "/home");
+          if (mounted) {
+            if (response.roles.contains("Admin")) {
+              Navigator.pushReplacementNamed(context, "/admin");
+            } else {
+              Navigator.pushReplacementNamed(context, "/home");
+            }
+          }
         } else {
           _showError(response.message);
         }

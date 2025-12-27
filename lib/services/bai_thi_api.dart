@@ -1,8 +1,6 @@
 import 'dart:convert';
-
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:http/http.dart' as http;
-
 import '../models/bai_thi.dart';
 
 class ApiBaiThiService{
@@ -29,8 +27,6 @@ class ApiBaiThiService{
   }
   static Future<List<BaiThi>> getByLoaiBangLaiId(String id) async {
     try {
-      // 1. Sửa URL: Bỏ dấu ngoặc nhọn {} và dấu nháy kép dư thừa
-      // URL đúng phải là: .../api/BaiThi/de-thi-by-id-lblai/id_cua_ban
       final url = Uri.parse('$baseUrl/de-thi-by-id-lblai/$id');
 
       final res = await http.get(
@@ -98,6 +94,59 @@ class ApiBaiThiService{
       }
     } catch (e) {
       throw Exception("Lỗi kết nối: $e");
+    }
+  }
+
+
+  static Future<bool> create(String tenBaiThi, List<String> cauHoiIds) async {
+    try {
+      const storage = FlutterSecureStorage();
+      String? token = await storage.read(key: 'jwt_token');
+
+      final res = await http.post(
+        Uri.parse('$baseUrl'), // POST /api/BaiThi
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode({
+          'tenBaiThi': tenBaiThi,
+          'chiTietBaiThis': cauHoiIds.map((id) => {'cauHoiId': id}).toList(),
+        }),
+      );
+
+      if (res.statusCode == 200 || res.statusCode == 201) {
+        return true;
+      } else {
+        final error = jsonDecode(res.body);
+        throw Exception(error['message'] ?? 'Lỗi tạo đề thi');
+      }
+    } catch (e) {
+      throw Exception("Lỗi: $e");
+    }
+  }
+
+  static Future<bool> delete(String id) async {
+    try {
+      const storage = FlutterSecureStorage();
+      String? token = await storage.read(key: 'jwt_token');
+
+      final res = await http.delete(
+        Uri.parse('$baseUrl/$id'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (res.statusCode == 200) {
+        return true;
+      } else {
+        final error = jsonDecode(res.body);
+        throw Exception(error['message'] ?? 'Lỗi xóa đề thi');
+      }
+    } catch (e) {
+      throw Exception("Lỗi: $e");
     }
   }
 }

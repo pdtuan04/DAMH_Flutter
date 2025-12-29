@@ -261,7 +261,7 @@ class HomeScreen extends StatefulWidget
 class _HomeScreenState extends State<HomeScreen> {
   int _current = 0;
   final List<String> imgList = [
-    'assets/images/aqua.jpg',
+    'assets/images/p1.png',
     'assets/images/my_lucy.jpg',
     'assets/images/word.jpg',
   ];

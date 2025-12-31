@@ -15,12 +15,12 @@ class DanhSachBaiThiScreen extends StatefulWidget {
 class _DanhSachBaiThiScreenState extends State<DanhSachBaiThiScreen> {
   late Future<List<BaiThi>> _baiThiFuture;
   late Future<List<LoaiBangLai>> _loaiBangLaiFuture;
-  String? _selectedLoaiBangLaiId; // ID đang được chọn (null nghĩa là Tất cả)
+  String? _selectedLoaiBangLaiId;
 
   @override
   void initState() {
     super.initState();
-    _loadAllBaiThi(); // Mặc định tải tất cả bài thi khi vào trang
+    _loadAllBaiThi();
     _loadAllLoaiBangLai();
   }
 

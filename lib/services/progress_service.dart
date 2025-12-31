@@ -47,4 +47,15 @@ class QuestionProgressService {
     // Xóa danh sách đã hoàn thành
     await prefs.remove(completedKey);
   }
+  static Future<void> clearAllProgress() async {
+    final prefs = await SharedPreferences.getInstance();
+    final keys = prefs.getKeys();
+
+    // Lọc ra các key liên quan đến tiến độ câu hỏi
+    for (String key in keys) {
+      if (key.startsWith('answer_') || key.startsWith('completed_')) {
+        await prefs.remove(key);
+      }
+    }
+  }
 }

@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/user.dart';
 import '../services/authenticate.dart';
+import '../services/progress_service.dart';
 import 'danh_sach_bai_thi_screen.dart';
 
 class Home extends StatefulWidget {
@@ -171,7 +172,7 @@ class ProfileScreen extends StatelessWidget {
               style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
           const SizedBox(height: 4),
           Text(user.email,
-              style: TextStyle(color: Colors.white.withOpacity(0.7), fontSize: 14)),
+              style: TextStyle(color: Colors.white, fontSize: 14)),
         ],
       ),
     );
@@ -226,6 +227,7 @@ class ProfileScreen extends StatelessWidget {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
         ),
         onPressed: () async {
+          await QuestionProgressService.clearAllProgress();
           await TokenService.deleteToken();
           Navigator.pushNamedAndRemoveUntil(context, "/login", (route) => false);
         },
@@ -262,8 +264,8 @@ class _HomeScreenState extends State<HomeScreen> {
   int _current = 0;
   final List<String> imgList = [
     'assets/images/p1.png',
-    'assets/images/my_lucy.jpg',
-    'assets/images/word.jpg',
+    'assets/images/img.png',
+    'assets/images/img_1.png',
   ];
 
   @override
@@ -274,8 +276,6 @@ class _HomeScreenState extends State<HomeScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildSlider(),
-
-          // Tiêu đề mục chính với icon nhỏ xinh
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
             child: Row(

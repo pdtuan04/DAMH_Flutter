@@ -6,6 +6,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import '../models/user.dart';
 import '../services/authenticate.dart';
 import '../services/progress_service.dart';
+import 'chat_box_screen.dart';
 import 'danh_sach_bai_thi_screen.dart';
 
 class Home extends StatefulWidget {
@@ -123,7 +124,6 @@ class ProfileScreen extends StatelessWidget {
                           style: TextStyle(fontSize: 13, fontWeight: FontWeight.bold, color: Colors.grey, letterSpacing: 1.2)),
                       const SizedBox(height: 16),
                       _buildActionTile(Icons.history_rounded, "Lịch sử thi", () {}),
-                      _buildActionTile(Icons.settings_outlined, "Cài đặt ứng dụng", () {}),
 
                       const SizedBox(height: 40),
                       _buildLogoutButton(context),
@@ -344,6 +344,18 @@ class _HomeScreenState extends State<HomeScreen> {
                   baseColor: Colors.teal,
                   onTap: () {
                     Navigator.pushNamed(context, '/on-toan-bo-cau-hoi');
+                  },
+                ),
+                _buildColorfulCard(
+                  icon: Icons.chat_bubble_rounded,
+                  title: "Hỏi đáp AI",
+                  sub: "Giải đáp luật giao thông",
+                  baseColor: Colors.pinkAccent,
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ChatBoxScreen()),
+                    );
                   },
                 ),
               ],

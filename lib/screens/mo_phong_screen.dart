@@ -1,242 +1,332 @@
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'package:audio_video_progress_bar/audio_video_progress_bar.dart';
+import 'package:provider/provider.dart';
 import '../models/mo_phong.dart';
+import '../providers/mo_phong_provider.dart';
 
-class MoPhongScreen extends StatefulWidget {
+class MoPhongScreen extends StatelessWidget {
   final MoPhong moPhong;
   const MoPhongScreen({super.key, required this.moPhong});
 
   @override
-  State<MoPhongScreen> createState() => _MoPhongScreenState();
-}
-
-class _MoPhongScreenState extends State<MoPhongScreen> {
-  late VideoPlayerController _controller;
-  bool _isInitialized = false;
-  bool _hasPressed = false;
-  int _score = 0;
-  double? _flagTime;
-
-  @override
-  void initState() {
-    super.initState();
-    _startVideo();
-  }
-
-  void _startVideo() {
-    final String fullUrl = 'http://10.0.2.2:5084${widget.moPhong.videoUrl}';
-    _controller = VideoPlayerController.networkUrl(Uri.parse(fullUrl))
-      ..initialize().then((_) {
-        setState(() => _isInitialized = true);
-        _controller.play();
-        _controller.addListener(() => setState(() {})); // Cập nhật thanh chạy liên tục
-      });
-  }
-
-  void _onFlagPressed() {
-    if (_hasPressed || !_isInitialized) return;
-    setState(() {
-      _hasPressed = true;
-      _flagTime = _controller.value.position.inMilliseconds / 1000.0;
-      _score = _calculateScore(_flagTime!);
-    });
-  }
-
-  int _calculateScore(double time) {
-    List<double> markers = widget.moPhong.dapAn.split(',').map((e) => double.parse(e.trim())).toList();
-    if (time >= markers[0] && time < markers[1]) return 10;
-    if (time >= markers[1] && time < markers[2]) return 8;
-    if (time >= markers[2] && time < markers[3]) return 6;
-    if (time >= markers[3] && time < markers[4]) return 4;
-    if (time >= markers[4] && time < markers[5]) return 2;
-    return 0;
-  }
-
-  void _reset() {
-    setState(() {
-      _hasPressed = false;
-      _score = 0;
-      _flagTime = null;
-    });
-    _controller.seekTo(Duration.zero);
-    _controller.play();
-  }
-
-  @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.grey[100],
-      appBar: AppBar(title: const Text("Mô Phỏng Tình Huống"), backgroundColor: Colors.indigo, foregroundColor: Colors.white),
-      body: SingleChildScrollView(
-        child: Column(
+    return ChangeNotifierProvider(
+      create: (_) => MoPhongProvider(moPhong: moPhong),
+      child:  Scaffold(
+        backgroundColor: Colors.white,
+        appBar: AppBar(
+          title: const Text("Mô Phỏng Tình Huống"),
+          centerTitle: true,
+        ),
+        body: Column(
           children: [
-            _buildHeader(),
-            _buildVideoPlayer(),
-            _buildCustomProgressSystem(), // Hệ thống thanh tiến trình mới
-            _buildResultBoard(),
+            const _VideoSection(),
+            const _ProgressSection(),
+            Expanded(
+              child: SingleChildScrollView(
+                child:  Column(
+                  children: [
+                    Padding(
+                      padding: const EdgeInsets.all(16.0),
+                      child: Text(
+                        moPhong.noiDung,
+                        textAlign: TextAlign.center,
+                      ),
+                    ),
+                    const _ResultBoard(),
+                  ],
+                ),
+              ),
+            ),
+            const _Controls(),
             const SizedBox(height: 20),
-            _buildControls(),
-            const SizedBox(height: 40),
           ],
         ),
       ),
     );
   }
+}
 
-  Widget _buildHeader() {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.all(12),
-      color: Colors.white,
-      child: Text(widget.moPhong.noiDung, style: const TextStyle(fontSize: 15, fontWeight: FontWeight.w600), textAlign: TextAlign.center),
-    );
-  }
+// ✅ Video Section - Chỉ rebuild khi isInitialized thay đổi
+class _VideoSection extends StatelessWidget {
+  const _VideoSection();
 
-  Widget _buildVideoPlayer() {
+  @override
+  Widget build(BuildContext context) {
     return AspectRatio(
       aspectRatio: 16 / 9,
       child: Container(
         color: Colors.black,
-        child: _isInitialized ? VideoPlayer(_controller) : const Center(child: CircularProgressIndicator()),
-      ),
-    );
-  }
-
-  // --- HỆ THỐNG THANH TIẾN TRÌNH TÙY CHỈNH ---
-  Widget _buildCustomProgressSystem() {
-    if (!_isInitialized) return const SizedBox(height: 30);
-
-    double totalTime = _controller.value.duration.inMilliseconds / 1000.0;
-    double currentTime = _controller.value.position.inMilliseconds / 1000.0;
-    double progress = currentTime / totalTime;
-
-    return Column(
-      children: [
-        // Thanh dải màu điểm
-        SizedBox(
-          height: 15,
-          width: double.infinity,
-          child: CustomPaint(
-            painter: ScoreBarPainter(
-              markers: widget.moPhong.dapAn.split(',').map((e) => double.parse(e.trim())).toList(),
-              totalTime: totalTime,
-              showColors: _hasPressed,
-            ),
-          ),
+        child:  Selector<MoPhongProvider, bool>(
+          selector:  (_, provider) => provider.isInitialized,
+          builder: (context, isInitialized, child) {
+            if (!isInitialized) {
+              return const Center(child: CircularProgressIndicator());
+            }
+            final controller = context.read<MoPhongProvider>().controller;
+            return VideoPlayer(controller);
+          },
         ),
-        // Thanh chạy thời gian thực
-        Container(
-          height: 6,
-          width: double.infinity,
-          color: Colors.grey[300],
-          child: Stack(
-            clipBehavior: Clip.none, // Cho phép ảnh cờ hiển thị tràn ra ngoài Stack
-            children: [
-              FractionallySizedBox(
-                widthFactor: progress.clamp(0.0, 1.0),
-                child: Container(color: Colors.indigo),
-              ),
-              // HIỂN THỊ CỜ BẰNG ẢNH TẠI ĐÂY
-              if (_flagTime != null)
-                Positioned(
-                  // Căn chỉnh vị trí cờ dựa trên thời gian đã bấm
-                  left: (_flagTime! / totalTime) * MediaQuery.of(context).size.width - 12.5,
-                  top: -25, // Đẩy cờ lên trên thanh tiến trình
-                  child: Image.asset(
-                    'assets/images/red_flag.png',
-                    width: 25,
-                    height: 25,
-                    fit: BoxFit.contain,
-                  ),
-                ),
-            ],
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildResultBoard() {
-    if (!_hasPressed) return const SizedBox(height: 80);
-    return Padding(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        children: [
-          Text("ĐIỂM: $_score", style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold, color: _score > 0 ? Colors.green : Colors.red)),
-          const SizedBox(height: 8),
-          Icon(_score == 5 ? Icons.stars : Icons.info_outline, color: _score > 0 ? Colors.green : Colors.red, size: 40),
-        ],
       ),
     );
-  }
-
-  Widget _buildControls() {
-    return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      child: Column(
-        children: [
-          SizedBox(
-            width: double.infinity,
-            height: 60,
-            child: ElevatedButton(
-              onPressed: _hasPressed ? null : _onFlagPressed,
-              style: ElevatedButton.styleFrom(
-                backgroundColor: Colors.red[700],
-                disabledBackgroundColor: Colors.grey[400],
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-              ),
-              child: const Text("PHANH NGAY", style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.white)),
-            ),
-          ),
-          if (_hasPressed)
-            TextButton.icon(
-              onPressed: _reset,
-              icon: const Icon(Icons.refresh),
-              label: const Text("THỬ LẠI"),
-              style: TextButton.styleFrom(foregroundColor: Colors.indigo, padding: const EdgeInsets.only(top: 20)),
-            ),
-        ],
-      ),
-    );
-  }
-
-  @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
   }
 }
 
+// ✅ Progress Section - Tối ưu rebuild
+class _ProgressSection extends StatelessWidget {
+  const _ProgressSection();
+
+  @override
+  Widget build(BuildContext context) {
+    final provider = context.read<MoPhongProvider>();
+
+    return Selector<MoPhongProvider, bool>(
+      selector: (_, p) => p.isInitialized,
+      builder:  (context, isInitialized, child) {
+        if (!isInitialized) return const LinearProgressIndicator();
+
+        return Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          child: SizedBox(
+            height: 30,
+            child: Stack(
+              clipBehavior: Clip.none,
+              children: [
+                // ✅ Thanh màu static - chỉ rebuild khi hasPressed thay đổi
+                Selector<MoPhongProvider, bool>(
+                  selector: (_, p) => p.hasPressed,
+                  builder: (context, hasPressed, child) {
+                    if (! hasPressed) return const SizedBox.shrink();
+
+                    return Positioned. fill(
+                      child: RepaintBoundary(
+                        child: CustomPaint(
+                          painter:  ScoreBarPainter(
+                            markers: provider.markers,
+                            totalTime: provider. controller.value.duration.inSeconds. toDouble(),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
+                // ✅ Progress bar - rebuild mỗi frame NHƯNG không ảnh hưởng các widget khác
+                ValueListenableBuilder(
+                  valueListenable:  provider.controller,
+                  builder: (context, VideoPlayerValue value, child) {
+                    return ProgressBar(
+                      progress: value.position,
+                      total: value.duration,
+                      buffered: value.buffered. isNotEmpty
+                          ? value.buffered. last.end
+                          : Duration.zero,
+                      onSeek: (duration) => provider.controller.seekTo(duration),
+                      barHeight: 5.0,
+                      thumbRadius: 7.0,
+                      timeLabelLocation: TimeLabelLocation.none,
+                    );
+                  },
+                ),
+
+                // ✅ Cờ static - chỉ rebuild khi flagTime thay đổi
+                Selector<MoPhongProvider, double?>(
+                  selector: (_, p) => p.flagTime,
+                  builder: (context, flagTime, child) {
+                    if (flagTime == null) return const SizedBox.shrink();
+
+                    final duration = provider.controller.value.duration. inSeconds;
+                    if (duration == 0) return const SizedBox.shrink();
+
+                    return Positioned(
+                      left: (flagTime / duration) *
+                          (MediaQuery.of(context).size.width - 32),
+                      top: -15,
+                      child: const Icon(Icons.flag, color: Colors.red, size: 20),
+                    );
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+}
+
+// ✅ Result Board - chỉ rebuild khi hasPressed hoặc score thay đổi
+class _ResultBoard extends StatelessWidget {
+  const _ResultBoard();
+
+  @override
+  Widget build(BuildContext context) {
+    return Selector<MoPhongProvider, ({bool hasPressed, int score})>(
+      selector: (_, p) => (hasPressed:  p.hasPressed, score: p.score),
+      builder: (context, data, child) {
+        if (! data.hasPressed) return const SizedBox.shrink();
+
+        return Column(
+          children: [
+            const Text("ĐIỂM SỐ"),
+            Text(
+              "${data.score}",
+              style: TextStyle(
+                fontSize: 48,
+                fontWeight: FontWeight.bold,
+                color: data.score > 0 ? Colors.green : Colors.red,
+              ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+// ✅ Controls - chỉ rebuild khi hasPressed thay đổi
+class _Controls extends StatelessWidget {
+  const _Controls();
+
+  @override
+  Widget build(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets. symmetric(horizontal: 16),
+      child:  Selector<MoPhongProvider, bool>(
+        selector: (_, p) => p.hasPressed,
+        builder: (context, hasPressed, child) {
+          final provider = context.read<MoPhongProvider>();
+
+          return Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  onPressed: hasPressed ? null : provider.onFlagPressed,
+                  style: ElevatedButton. styleFrom(
+                    backgroundColor:  Colors.red,
+                    foregroundColor: Colors.white,
+                  ),
+                  child:  const Text("CẮM CỜ (SPACE)"),
+                ),
+              ),
+              if (hasPressed) ...[
+                const SizedBox(width:  10),
+                IconButton(
+                  onPressed: provider. reset,
+                  icon: const Icon(Icons.refresh),
+                ),
+              ]
+            ],
+          );
+        },
+      ),
+    );
+  }
+}
+
+// CustomPainter giữ nguyên
 class ScoreBarPainter extends CustomPainter {
   final List<double> markers;
   final double totalTime;
-  final bool showColors;
 
   ScoreBarPainter({
     required this.markers,
     required this.totalTime,
-    required this.showColors
   });
 
   @override
   void paint(Canvas canvas, Size size) {
-    if (showColors) {
-      // Vẽ dải màu tương ứng với các mốc điểm
-      final colors = [Colors.green, Colors.lightGreen, Colors.yellow, Colors.orange, Colors.red];
-      for (int i = 0; i < 5; i++) {
-        if (i + 1 < markers.length) {
-          final paint = Paint()..color = colors[i];
-          double left = (markers[i] / totalTime) * size.width;
-          double right = (markers[i + 1] / totalTime) * size.width;
-          canvas.drawRect(Rect.fromLTRB(left, 0, right, size.height), paint);
-        }
-      }
+    if (totalTime <= 0 || markers.length < 6) return;
+
+    final colors = [
+      Colors.green,
+      Colors.lightGreen,
+      Colors.yellow,
+      Colors.orange,
+      Colors. redAccent,
+    ];
+
+    for (int i = 0; i < 5; i++) {
+      final paint = Paint()..color = colors[i];
+      double left = (markers[i] / totalTime) * size.width;
+      double right = (markers[i + 1] / totalTime) * size.width;
+      canvas.drawRect(Rect. fromLTRB(left, 0, right, size.height), paint);
     }
-    // Đã xóa phần vẽ Line và Path của cờ đỏ ở đây
   }
 
   @override
   bool shouldRepaint(covariant ScoreBarPainter oldDelegate) {
-    return oldDelegate.showColors != showColors || oldDelegate.markers != markers;
+    return oldDelegate. totalTime != totalTime ||
+        oldDelegate.markers != markers;
+  }
+}
+class MoPhongProvider extends ChangeNotifier {
+  final MoPhong moPhong;
+  late VideoPlayerController controller;
+  late List<double> markers;
+
+  bool isInitialized = false;
+  bool hasPressed = false;
+  int score = 0;
+  double?  flagTime;
+
+  MoPhongProvider({required this.moPhong}) {
+    markers = moPhong. dapAn
+        .split(',')
+        .map((e) => double.parse(e.trim()))
+        .toList();
+    _initializeVideo();
+  }
+
+  void _initializeVideo() {
+    final String fullUrl = 'http://10.0.2.2:5084${moPhong.videoUrl}';
+    controller = VideoPlayerController.networkUrl(Uri.parse(fullUrl))
+      ..initialize().then((_) {
+        isInitialized = true;
+        notifyListeners();
+        controller.play();
+      });
+  }
+
+  void onFlagPressed() {
+    if (hasPressed || !isInitialized) return;
+
+    // Pause video ngay lập tức
+    controller.pause();
+
+    hasPressed = true;
+    flagTime = controller.value.position.inMilliseconds / 1000.0;
+    score = _calculateScore(flagTime!);
+
+    notifyListeners(); // ✅ Chỉ rebuild những widget cần thiết
+  }
+
+  int _calculateScore(double time) {
+    try {
+      if (time >= markers[0] && time < markers[1]) return 5;
+      if (time >= markers[1] && time < markers[2]) return 4;
+      if (time >= markers[2] && time < markers[3]) return 3;
+      if (time >= markers[3] && time < markers[4]) return 2;
+      if (time >= markers[4] && time < markers[5]) return 1;
+    } catch (e) {
+      print(e);
+    }
+    return 0;
+  }
+
+  void reset() {
+    hasPressed = false;
+    score = 0;
+    flagTime = null;
+    controller.seekTo(Duration.zero);
+    controller.play();
+    notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    controller.dispose();
+    super.dispose();
   }
 }

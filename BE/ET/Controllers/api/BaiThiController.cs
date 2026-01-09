@@ -52,7 +52,7 @@ namespace ET.Controllers.api
                     ketQuaList = result.KetQuaList.Select(kq => new
                     {
                         kq.CauHoiId,
-                        kq.CauTraLoi,
+                        kq.UserDapAn,
                         kq.DapAnDung,
                         kq.DungSai
                     }),

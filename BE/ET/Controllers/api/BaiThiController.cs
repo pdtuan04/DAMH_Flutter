@@ -52,7 +52,7 @@ namespace ET.Controllers.api
                     ketQuaList = result.KetQuaList.Select(kq => new
                     {
                         kq.CauHoiId,
-                        kq.CauTraLoi,
+                        kq.UserDapAn,
                         kq.DapAnDung,
                         kq.DungSai
                     }),
@@ -496,6 +496,43 @@ namespace ET.Controllers.api
                     } : null
                 }).ToList()
             }).ToList();
+
+            return Ok(result);
+        }
+        [HttpGet("de-thi-ngau-nhien")]
+        public async Task<IActionResult> GetDeThiNgauNhienAll()
+        {
+            var baiThi = await _baiThiService.GetRandomAsync();
+            if (baiThi == null)
+                return NotFound(new { success = false, message = "Không tìm thấy bài thi!" });
+
+            var result = new
+            {
+                baiThi.Id,
+                baiThi.TenBaiThi,
+                ChiTietBaiThis = baiThi.ChiTietBaiThis.Select(ct => new
+                {
+                    ct.Id,
+                    CauHoi = new
+                    {
+                        ct.CauHoi.Id,
+                        ct.CauHoi.NoiDung,
+                        ct.CauHoi.LuaChonA,
+                        ct.CauHoi.LuaChonB,
+                        ct.CauHoi.LuaChonC,
+                        ct.CauHoi.LuaChonD,
+                        ct.CauHoi.DapAnDung,
+                        ct.CauHoi.MediaUrl,
+                        LoaiBangLai = new
+                        {
+                            ct.CauHoi.LoaiBangLai.Id,
+                            ct.CauHoi.LoaiBangLai.TenLoai,
+                            ct.CauHoi.LoaiBangLai.ThoiGianThi,
+                            ct.CauHoi.LoaiBangLai.DiemToiThieu
+                        }
+                    }
+                }).ToList()
+            };
 
             return Ok(result);
         }

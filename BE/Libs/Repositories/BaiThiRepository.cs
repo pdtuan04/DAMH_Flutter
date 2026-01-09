@@ -1,5 +1,6 @@
 ﻿using Libs.Data;
 using Libs.Entity;
+using Libs.Extensions;
 using Libs.Models;
 using Microsoft.EntityFrameworkCore;
 using System;
@@ -14,7 +15,7 @@ namespace Libs.Repositories
     {
         Task<BaiThi> GetBaiThiWithDetails(Guid id);
         (List<KetQuaBaiThi> ketQuaList, float diem, int tongSoCau, int diemToiThieu) ChamDiem(BaiThi baiThi, Dictionary<Guid, string> answers);
-        Task<NopBaiThiResult> XuLyNopBaiThi(SubmitBaiThiRequest request, string userId);
+        Task<KetQuaBaiThiDto> XuLyNopBaiThi(SubmitBaiThiRequest request, string userId);
         Task<BaiThi> GetDeThiNgauNhien(Guid loaiBangLaiId);
         Task<BaiThi> GetChiTietBaiThi(Guid id);
         Task<List<BaiThi>> GetDanhSachBaiThi();
@@ -30,6 +31,7 @@ namespace Libs.Repositories
         Task SaveChangesAsync();
         Task<BaiThi> GetByIdAsync(Guid id);
         ApplicationDbContext GetDbContext();
+        Task<BaiThi> GetRandomAsync();
     }
 
     public class BaiThiRepository : RepositoryBase<BaiThi>, IBaiThiRepository
@@ -67,6 +69,7 @@ namespace Libs.Repositories
 
                 ketQuaList.Add(new KetQuaBaiThi
                 {
+                    BaiThiId = baiThi.Id,
                     CauHoiId = ct.CauHoiId,
                     CauTraLoi = userChar,   // Gán char cho thuộc tính char
                     DapAnDung = correctChar, // Gán char cho thuộc tính char
@@ -219,7 +222,7 @@ namespace Libs.Repositories
             }
         }
 
-        public async Task<NopBaiThiResult> XuLyNopBaiThi(SubmitBaiThiRequest request, string? userId)
+        public async Task<KetQuaBaiThiDto> XuLyNopBaiThi(SubmitBaiThiRequest request, string? userId)
         {
             var baiThi = await _dbContext.BaiThis
                 .Include(b => b.ChiTietBaiThis)
@@ -228,7 +231,7 @@ namespace Libs.Repositories
                 .FirstOrDefaultAsync(b => b.Id == request.BaiThiId);
 
             if (baiThi == null)
-                return new NopBaiThiResult { Success = false, Message = "Không tìm thấy bài thi." };
+                return new KetQuaBaiThiDto { Success = false, Message = "Không tìm thấy bài thi." };
 
             var (ketQuaList, diem, tongSoCau, diemToiThieu) = ChamDiem(baiThi, request.Answers);
             var ketQua = diem >= diemToiThieu ? "Đậu" : "Không Đạt";
@@ -242,12 +245,26 @@ namespace Libs.Repositories
 
             if (!string.IsNullOrEmpty(userId))
                 await LuuLichSuThiAsync(userId, baiThi, ketQuaList, tongSoCau, diem, ketQua, macLoiNghiemTrong);
+            var cauHoiMap = baiThi.ChiTietBaiThis.ToDictionary(ct => ct.CauHoiId, ct => ct.CauHoi);
 
-            return new NopBaiThiResult
+            var ketQuaBaiThiList = ketQuaList.Select(kq =>
+            {
+                var cauHoi = cauHoiMap[kq.CauHoiId];
+
+                return new CauTraLoiDto
+                {
+                    BaiThiId = kq.BaiThiId,
+                    CauHoiId = kq.CauHoiId,
+                    UserDapAn = NoiDungDapAn.GetNoiDungDapAn(cauHoi, kq.CauTraLoi),
+                    DapAnDung = NoiDungDapAn.GetNoiDungDapAn(cauHoi, kq.DapAnDung),
+                    DungSai = kq.DungSai
+                };
+            }).ToList();
+            return new KetQuaBaiThiDto
             {
                 Success = true,
                 BaiThiId = baiThi.Id,
-                KetQuaList = ketQuaList,
+                KetQuaList = ketQuaBaiThiList,
                 SoCauDung = soCauDung,
                 TongSoCau = tongSoCau,
                 KetQua = ketQua,
@@ -440,6 +457,16 @@ namespace Libs.Repositories
         public ApplicationDbContext GetDbContext()
         {
             return _dbContext;
+        }
+        public async Task<BaiThi> GetRandomAsync()
+        {
+            var result  = await _dbContext.BaiThis.Include(bt => bt.ChiTietBaiThis)
+                    .ThenInclude(ct => ct.CauHoi)
+                        .ThenInclude(c => c.LoaiBangLai)
+                .Include(bt => bt.ChiTietBaiThis)
+                    .ThenInclude(ct => ct.CauHoi).OrderBy(x => Guid.NewGuid()).FirstOrDefaultAsync();
+
+            return result;
         }
     }
 }

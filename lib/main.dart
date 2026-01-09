@@ -1,7 +1,15 @@
 import 'package:damh_flutter/screens/home.dart';
+import 'package:damh_flutter/screens/lam_bai_thi_ngau_nhien.dart';
 import 'package:damh_flutter/screens/login_screen.dart';
+import 'package:damh_flutter/screens/on_tap_cau_hoi_hay_sai.dart';
 import 'package:damh_flutter/screens/on_tap_theo_chu_de_screen.dart';
+import 'package:damh_flutter/screens/on_toan_bo_cau_hoi.dart';
 import 'package:damh_flutter/screens/register_screen.dart';
+import 'package:damh_flutter/screens/admin/admin_home_screen.dart';
+import 'package:damh_flutter/screens/admin/loaibanglai/quanly_loai_bang_lai.dart';
+import 'package:damh_flutter/screens/admin/chude/quanly_chu_de.dart';
+import 'package:damh_flutter/screens/admin/cauhoi/quanly_cau_hoi.dart';
+import 'package:damh_flutter/screens/admin/baithi/quanly_bai_thi.dart';
 import 'package:flutter/material.dart';
 void main() {
   runApp(MyApp());
@@ -19,6 +27,14 @@ class MyApp extends StatelessWidget {
         '/login': (context) => LoginScreen(),
         '/register': (context) => RegisterScreen(),
         '/ontaptheochude': (context) => OnTapTheoChuDeScreen(),
+        '/admin': (context) => AdminHomeScreen(),
+        '/admin/loai-bang-lai': (context) => QuanLyLoaiBangLai(),
+        '/admin/chu-de': (context) => QuanLyChuDe(),
+        '/admin/cau-hoi': (context) => QuanLyCauHoi(),
+        '/admin/bai-thi': (context) => QuanLyBaiThi(),
+        '/random-de-thi': (context) => LamBaiThiNgauNhienScreen(),
+        '/on-cau-hoi-hay-sai': (context) => CauHoiHaySaiScreen(),
+        '/on-toan-bo-cau-hoi': (context) => OnToanBoCauHoiScreen(),
       },
     );
   }

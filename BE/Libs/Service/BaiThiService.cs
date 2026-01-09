@@ -35,7 +35,7 @@ namespace Libs.Service
             return _baiThiRepository.ChamDiem(baiThi, answers);
         }
 
-        public async Task<NopBaiThiResult> XuLyNopBaiThi(SubmitBaiThiRequest request, string userId)
+        public async Task<KetQuaBaiThiDto> XuLyNopBaiThi(SubmitBaiThiRequest request, string userId)
         {
             return await _baiThiRepository.XuLyNopBaiThi(request, userId);
         }
@@ -191,6 +191,10 @@ namespace Libs.Service
         public async Task<BaiThi> GetById(Guid id)
         {
             return await _baiThiRepository.GetByIdAsync(id); // Sử dụng phương thức async
+        }
+        public async Task<BaiThi> GetRandomAsync()
+        {
+            return await _baiThiRepository.GetRandomAsync();
         }
     }
 }

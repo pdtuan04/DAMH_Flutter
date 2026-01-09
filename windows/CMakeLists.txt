@@ -1,5 +1,6 @@
 # Project-level configuration.
 cmake_minimum_required(VERSION 3.14)
+set(CMAKE_SYSTEM_VERSION 10.0.22000.0)
 project(damh_flutter LANGUAGES CXX)
 
 # The name of the executable created for the application. Change this to change

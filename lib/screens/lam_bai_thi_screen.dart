@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'dart:async';
 import '../models/bai_thi.dart';
 import '../models/cau_hoi.dart';
 import '../services/bai_thi_api.dart';
@@ -14,9 +15,16 @@ class LamBaiThiScreen extends StatefulWidget {
 
 class _LamBaiThiScreenState extends State<LamBaiThiScreen> {
   late Future<BaiThi> _baiThiFuture;
-  late PageController _pageController; // Thêm controller để nhảy câu hỏi
+  late PageController _pageController;
+  late BaiThi baiThi;
+
   int _currentQuestionIndex = 0;
   Map<int, String> _selectedAnswers = {};
+
+  // Quản lý Timer & Trạng thái load
+  Timer? _timer;
+  int _remainingSeconds = 1140; // 19 phút mặc định
+  bool _isTimerStarted = false;
 
   @override
   void initState() {
@@ -27,11 +35,34 @@ class _LamBaiThiScreenState extends State<LamBaiThiScreen> {
 
   @override
   void dispose() {
+    _timer?.cancel();
     _pageController.dispose();
     super.dispose();
   }
 
-  // Hàm để nhảy tới câu hỏi bất kỳ
+  void _startTimer(int minutes) {
+    if (_isTimerStarted) return;
+    setState(() {
+      _remainingSeconds = minutes * 60;
+      _isTimerStarted = true;
+    });
+
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_remainingSeconds > 0) {
+        setState(() => _remainingSeconds--);
+      } else {
+        _timer?.cancel();
+        _submitExam(baiThi.chiTietBaiThis, isForced: true);
+      }
+    });
+  }
+
+  String _formatTime(int seconds) {
+    int mins = seconds ~/ 60;
+    int secs = seconds % 60;
+    return "${mins.toString().padLeft(2, '0')}:${secs.toString().padLeft(2, '0')}";
+  }
+
   void _goToQuestion(int index) {
     _pageController.animateToPage(
       index,
@@ -43,47 +74,46 @@ class _LamBaiThiScreenState extends State<LamBaiThiScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      backgroundColor: Colors.grey[100],
       appBar: AppBar(
-        title: const Text('Làm bài thi'),
-        backgroundColor: Colors.deepPurpleAccent,
-        actions: [
-          // Nút mở danh sách câu hỏi nhanh trên AppBar
-          IconButton(
-            icon: const Icon(Icons.grid_view),
-            onPressed: () => _showQuestionSheet(context),
-          )
-        ],
+        title: const Text('Làm Bài Thi', style: TextStyle(fontWeight: FontWeight.bold)),
+        centerTitle: true,
+        backgroundColor: Colors.indigo,
+        foregroundColor: Colors.white,
+        elevation: 0,
       ),
       body: FutureBuilder<BaiThi>(
         future: _baiThiFuture,
         builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator());
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          }
           if (snapshot.hasError) return Center(child: Text('Lỗi: ${snapshot.error}'));
 
-          final baiThi = snapshot.data!;
+          baiThi = snapshot.data!;
           final questions = baiThi.chiTietBaiThis;
+
+          // Bắt đầu timer khi có dữ liệu
+          if (!_isTimerStarted) {
+            WidgetsBinding.instance.addPostFrameCallback((_) => _startTimer(19));
+          }
+
+          // Tiến độ dựa trên số câu thực tế đã làm
+          double progressValue = questions.isNotEmpty ? _selectedAnswers.length / questions.length : 0;
 
           return Column(
             children: [
-              LinearProgressIndicator(
-                value: (_currentQuestionIndex + 1) / questions.length,
-                color: Colors.green,
-              ),
+              _buildTimerHeader(progressValue, questions.length),
               Expanded(
                 child: PageView.builder(
                   controller: _pageController,
                   onPageChanged: (index) => setState(() => _currentQuestionIndex = index),
                   itemCount: questions.length,
-                    itemBuilder: (context, index) {
-                      final chiTiet = questions[index];
-
-                      // Kiểm tra nếu dữ liệu câu hỏi bị rỗng (null) từ API
-                      if (chiTiet.cauHoi == null) {
-                        return const Center(child: Text("Câu hỏi này chưa có dữ liệu nội dung."));
-                      }
-                      // Dùng dấu ! để báo với Flutter rằng chiTiet.cauHoi chắc chắn không null ở dòng này
-                      return _buildQuestionCard(chiTiet.cauHoi!, index);
-                    }
+                  itemBuilder: (context, index) {
+                    final chiTiet = questions[index];
+                    if (chiTiet.cauHoi == null) return const Center(child: Text("Dữ liệu trống"));
+                    return _buildQuestionCard(chiTiet.cauHoi!, index);
+                  },
                 ),
               ),
               _buildBottomAction(questions),
@@ -93,168 +123,105 @@ class _LamBaiThiScreenState extends State<LamBaiThiScreen> {
       ),
     );
   }
-  void _submitExam(List<ChiTietBaiThi> questions) async {
-    // 1. Kiểm tra xem người dùng đã làm hết bài chưa
-    int totalQuestions = questions.length;
-    int answeredQuestions = _selectedAnswers.length;
 
-    bool? confirm = await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Xác nhận nộp bài'),
-        content: Text('Bạn đã hoàn thành $answeredQuestions/$totalQuestions câu hỏi. Bạn có chắc chắn muốn kết thúc bài thi?'),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Tiếp tục làm')),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            onPressed: () => Navigator.pop(context, true),
-            child: const Text('Nộp bài', style: TextStyle(color: Colors.white)),
-          ),
-        ],
+  // HEADER GIỐNG BẢN NGẪU NHIÊN
+  Widget _buildTimerHeader(double progressValue, int totalQuestions) {
+    bool isWarning = _isTimerStarted && _remainingSeconds < 120;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(16, 10, 16, 20),
+      decoration: const BoxDecoration(
+        color: Colors.indigo,
+        borderRadius: BorderRadius.only(bottomLeft: Radius.circular(24), bottomRight: Radius.circular(24)),
       ),
-    );
-
-    if (confirm != true) return;
-
-    // 2. Hiển thị Loading trong khi chờ Server xử lý
-    showDialog(
-        context: context,
-        barrierDismissible: false,
-        builder: (_) => const Center(child: CircularProgressIndicator())
-    );
-
-    try {
-      // 3. Định dạng lại dữ liệu Answers theo yêu cầu của Backend (Dictionary<Guid, string>)
-      // Key phải là Id của ChiTietBaiThi
-      Map<String, String> formattedAnswers = {};
-      _selectedAnswers.forEach((index, value) {
-        String chiTietId = questions[index].id;
-        formattedAnswers[chiTietId] = value;
-      });
-
-      // 4. Gọi Service để gửi dữ liệu
-      final resultData = await ApiBaiThiService.submitResult(widget.baiThiId, formattedAnswers);
-      print("--- DỮ LIỆU TỪ SERVER ---");
-      print(resultData);
-      print("-------------------------");
-      // Tắt dialog loading
-      if (mounted) Navigator.pop(context);
-
-      // 5. Chuyển đổi dữ liệu JSON trả về thành Model Kết Quả
-      final ketQuaModel = KetQuaNopBai.fromJson(resultData);
-
-      // 6. Chuyển sang màn hình kết quả (Xóa màn hình làm bài khỏi stack)
-      if (mounted) {
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (_) => KetQuaBaiThiScreen(ketQua: ketQuaModel)),
-        );
-      }
-    } catch (e) {
-      if (mounted) Navigator.pop(context); // Tắt loading
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Lỗi khi nộp bài: $e'), backgroundColor: Colors.red),
-      );
-    }
-  }
-  // Lưới danh sách câu hỏi (BottomSheet)
-  void _showQuestionSheet(BuildContext context) {
-    _baiThiFuture.then((baiThi) {
-      showModalBottomSheet(
-        context: context,
-        builder: (context) {
-          return Container(
-            padding: const EdgeInsets.all(16),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            decoration: BoxDecoration(
+              color: isWarning ? Colors.redAccent : Colors.white.withOpacity(0.15),
+              borderRadius: BorderRadius.circular(15),
+              border: Border.all(color: Colors.white.withOpacity(0.3)),
+            ),
+            child: Text(
+              _formatTime(_remainingSeconds),
+              style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
             child: Column(
-              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text('Danh sách câu hỏi', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
-                Flexible(
-                  child: GridView.builder(
-                    shrinkWrap: true,
-                    gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                      crossAxisCount: 5, // 5 cột
-                      mainAxisSpacing: 10,
-                      crossAxisSpacing: 10,
-                    ),
-                    itemCount: baiThi.chiTietBaiThis.length,
-                    itemBuilder: (context, index) {
-                      bool isAnswered = _selectedAnswers.containsKey(index);
-                      bool isCurrent = _currentQuestionIndex == index;
-
-                      return GestureDetector(
-                        onTap: () {
-                          _goToQuestion(index);
-                          Navigator.pop(context);
-                        },
-                        child: Container(
-                          alignment: Alignment.center,
-                          decoration: BoxDecoration(
-                            // Nếu làm rồi thì màu xanh, chưa làm màu xám nhạt
-                            color: isAnswered ? Colors.green : Colors.grey[200],
-                            borderRadius: BorderRadius.circular(8),
-                            border: isCurrent ? Border.all(color: Colors.orange, width: 3) : null,
-                          ),
-                          child: Text(
-                            '${index + 1}',
-                            style: TextStyle(
-                              color: isAnswered ? Colors.white : Colors.black,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ),
-                      );
-                    },
+                Text(
+                  'Tiến độ: ${_selectedAnswers.length}/$totalQuestions câu',
+                  style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.w500),
+                ),
+                const SizedBox(height: 6),
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: LinearProgressIndicator(
+                    value: progressValue,
+                    minHeight: 8,
+                    backgroundColor: Colors.white.withOpacity(0.2),
+                    valueColor: const AlwaysStoppedAnimation<Color>(Colors.greenAccent),
                   ),
                 ),
               ],
             ),
-          );
-        },
-      );
-    });
+          ),
+        ],
+      ),
+    );
   }
 
   Widget _buildQuestionCard(CauHoi cauHoi, int index) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16.0),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Text('Câu hỏi ${index + 1}:', style: const TextStyle(color: Colors.grey, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 8),
-          Text(cauHoi.noiDung, style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
-          const SizedBox(height: 20),
-          _buildOption(index, 'A', cauHoi.luaChonA),
-          _buildOption(index, 'B', cauHoi.luaChonB),
-          _buildOption(index, 'C', cauHoi.luaChonC),
-          _buildOption(index, 'D', cauHoi.luaChonD),
-        ],
+      padding: const EdgeInsets.all(20),
+      child: Card(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        elevation: 2,
+        child: Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text('CÂU HỎI ${index + 1}', style: const TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold)),
+              const SizedBox(height: 12),
+              Text(cauHoi.noiDung, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, height: 1.4)),
+              const SizedBox(height: 24),
+              _buildOption(index, 'A', cauHoi.luaChonA),
+              _buildOption(index, 'B', cauHoi.luaChonB),
+              _buildOption(index, 'C', cauHoi.luaChonC),
+              _buildOption(index, 'D', cauHoi.luaChonD),
+            ],
+          ),
+        ),
       ),
     );
   }
 
   Widget _buildOption(int questionIndex, String key, String? value) {
     if (value == null || value.isEmpty) return const SizedBox.shrink();
-    bool isSelected = _selectedAnswers[questionIndex] == key;
+    bool selected = _selectedAnswers[questionIndex] == key;
 
-    return GestureDetector(
+    return InkWell(
       onTap: () => setState(() => _selectedAnswers[questionIndex] = key),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: isSelected ? Colors.green.withOpacity(0.1) : Colors.white,
+          color: selected ? Colors.indigo.withOpacity(0.05) : Colors.white,
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: isSelected ? Colors.green : Colors.grey[300]!, width: 2),
+          border: Border.all(color: selected ? Colors.indigo : Colors.grey[300]!, width: 1.5),
         ),
         child: Row(
           children: [
             CircleAvatar(
-              radius: 15,
-              backgroundColor: isSelected ? Colors.green : Colors.grey[300],
-              child: Text(key, style: TextStyle(color: isSelected ? Colors.white : Colors.black, fontSize: 14)),
+              radius: 14,
+              backgroundColor: selected ? Colors.indigo : Colors.grey[200],
+              child: Text(key, style: TextStyle(fontSize: 12, color: selected ? Colors.white : Colors.black87)),
             ),
             const SizedBox(width: 12),
             Expanded(child: Text(value, style: const TextStyle(fontSize: 16))),
@@ -266,25 +233,120 @@ class _LamBaiThiScreenState extends State<LamBaiThiScreen> {
 
   Widget _buildBottomAction(List<ChiTietBaiThi> questions) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(color: Colors.white, boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)]),
-      child: Row(
-        children: [
-          // Nút mở Grid câu hỏi nhanh ở dưới
-          IconButton(
-            onPressed: () => _showQuestionSheet(context),
-            icon: const Icon(Icons.apps, color: Colors.deepPurple),
-          ),
-          const SizedBox(width: 10),
-          Text('${_selectedAnswers.length}/${questions.length} câu', style: const TextStyle(fontWeight: FontWeight.bold)),
-          const Spacer(),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.orange),
-            onPressed: () => _submitExam(questions), // GỌI HÀM NỘP BÀI TẠI ĐÂY
-            child: const Text('Nộp bài', style: TextStyle(color: Colors.white)),
-          ),
-        ],
+      child: SafeArea(
+        child: Row(
+          children: [
+            IconButton(
+                onPressed: () => _showQuestionSheet(context),
+                icon: const Icon(Icons.apps, color: Colors.indigo, size: 28)
+            ),
+            const SizedBox(width: 8),
+            Text('${_selectedAnswers.length}/${questions.length} câu đã làm', style: const TextStyle(fontWeight: FontWeight.bold)),
+            const Spacer(),
+            ElevatedButton(
+              onPressed: () => _submitExam(questions),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.orange[800],
+                padding: const EdgeInsets.symmetric(horizontal: 30, vertical: 12),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+              child: const Text('NỘP BÀI', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
       ),
     );
+  }
+
+  void _showQuestionSheet(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+      builder: (context) => Container(
+        padding: const EdgeInsets.all(20),
+        constraints: BoxConstraints(maxHeight: MediaQuery.of(context).size.height * 0.7),
+        child: Column(
+          children: [
+            const Text('Danh sách câu hỏi', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+            const SizedBox(height: 20),
+            Expanded(
+              child: GridView.builder(
+                gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                  crossAxisCount: 5,
+                  mainAxisSpacing: 12,
+                  crossAxisSpacing: 12,
+                ),
+                itemCount: baiThi.chiTietBaiThis.length,
+                itemBuilder: (context, index) {
+                  bool done = _selectedAnswers.containsKey(index);
+                  bool current = _currentQuestionIndex == index;
+                  return InkWell(
+                    onTap: () { Navigator.pop(context); _goToQuestion(index); },
+                    child: Container(
+                      alignment: Alignment.center,
+                      decoration: BoxDecoration(
+                        color: done ? Colors.green : Colors.grey[200],
+                        borderRadius: BorderRadius.circular(10),
+                        border: current ? Border.all(color: Colors.orange, width: 3) : null,
+                      ),
+                      child: Text('${index + 1}', style: TextStyle(color: done ? Colors.white : Colors.black, fontWeight: FontWeight.bold)),
+                    ),
+                  );
+                },
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _submitExam(List<ChiTietBaiThi> questions, {bool isForced = false}) async {
+    if (!isForced) {
+      bool? confirm = await showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Xác nhận nộp bài'),
+          content: Text('Bạn đã làm ${_selectedAnswers.length}/${questions.length} câu. Bạn có chắc chắn muốn nộp?'),
+          actions: [
+            TextButton(onPressed: () => Navigator.pop(context, false), child: const Text('Hủy')),
+            ElevatedButton(
+              onPressed: () => Navigator.pop(context, true),
+              style: ElevatedButton.styleFrom(backgroundColor: Colors.indigo),
+              child: const Text('Xác nhận', style: TextStyle(color: Colors.white)),
+            ),
+          ],
+        ),
+      );
+      if (confirm != true) return;
+    }
+
+    _timer?.cancel();
+    showDialog(context: context, barrierDismissible: false, builder: (_) => const Center(child: CircularProgressIndicator()));
+
+    try {
+      Map<String, String> formattedAnswers = {};
+      _selectedAnswers.forEach((index, value) {
+        formattedAnswers[questions[index].id] = value;
+      });
+
+      final resultData = await ApiBaiThiService.submitResult(widget.baiThiId, formattedAnswers);
+      if (mounted) Navigator.pop(context);
+
+      final ketQuaModel = KetQuaNopBai.fromJson(resultData);
+
+      if (mounted) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (_) => KetQuaBaiThiScreen(ketQua: ketQuaModel)),
+        );
+      }
+    } catch (e) {
+      if (mounted) Navigator.pop(context);
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Lỗi: $e'), backgroundColor: Colors.red));
+    }
   }
 }

@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import '../../services/authenticate.dart';
 
 class AdminHomeScreen extends StatelessWidget {
+  const AdminHomeScreen({super.key});
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -11,9 +13,8 @@ class AdminHomeScreen extends StatelessWidget {
         actions: [
           IconButton(
             icon: const Icon(Icons.logout),
-            onPressed: () async {
-              await TokenService.deleteToken();
-              Navigator.pushReplacementNamed(context, '/login');
+            onPressed: () {
+              _showLogoutConfirmDialog(context);
             },
           ),
         ],
@@ -59,7 +60,14 @@ class AdminHomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAdminCard(BuildContext context, String title, IconData icon, Color color, VoidCallback onTap) {
+  /// Card chức năng admin
+  Widget _buildAdminCard(
+      BuildContext context,
+      String title,
+      IconData icon,
+      Color color,
+      VoidCallback onTap,
+      ) {
     return Card(
       elevation: 4.0,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
@@ -86,6 +94,39 @@ class AdminHomeScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  /// Dialog xác nhận đăng xuất
+  void _showLogoutConfirmDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (BuildContext context) {
+        return AlertDialog(
+          title: const Text('Xác nhận đăng xuất'),
+          content: const Text('Bạn có chắc chắn muốn đăng xuất không?'),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+              },
+              child: const Text('Hủy'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.redAccent,
+              ),
+              onPressed: () async {
+                await TokenService.deleteToken();
+                Navigator.of(context).pop();
+                Navigator.pushReplacementNamed(context, '/login');
+              },
+              child: const Text('Đăng xuất'),
+            ),
+          ],
+        );
+      },
     );
   }
 }

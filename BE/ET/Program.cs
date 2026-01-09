@@ -146,6 +146,25 @@ if (!app.Environment.IsDevelopment())
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
+
+// Cấu hình Static Files cho phép Range Request
+//var staticFileOptions = new StaticFileOptions
+//{
+//    // Cấu hình trả về header Content-Type đúng chuẩn video
+//    ContentTypeProvider = new Microsoft.AspNetCore.StaticFiles.FileExtensionContentTypeProvider
+//    {
+//        Mappings = { [".mp4"] = "video/mp4" }
+//    },
+//    // Quan trọng: Cho phép video load từng đoạn
+//    ServeUnknownFileTypes = true,
+//    OnPrepareResponse = ctx =>
+//    {
+//        ctx.Context.Response.Headers.Append("Cache-Control", "public,max-age=600");
+//    }
+//};
+
+//// Đặt dòng này TRƯỚC app.MapControllers();
+//app.UseStaticFiles(staticFileOptions);
 app.UseStaticFiles();
 app.UseHttpsRedirection();
 app.UseRouting();

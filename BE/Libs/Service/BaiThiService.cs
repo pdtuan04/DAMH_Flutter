@@ -35,7 +35,7 @@ namespace Libs.Service
             return _baiThiRepository.ChamDiem(baiThi, answers);
         }
 
-        public async Task<NopBaiThiResult> XuLyNopBaiThi(SubmitBaiThiRequest request, string userId)
+        public async Task<KetQuaBaiThiDto> XuLyNopBaiThi(SubmitBaiThiRequest request, string userId)
         {
             return await _baiThiRepository.XuLyNopBaiThi(request, userId);
         }

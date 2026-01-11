@@ -1,3 +1,4 @@
+import 'dart:io' as java_io;
 import 'package:flutter/material.dart';
 import '../../../models/chu_de.dart';
 
@@ -26,23 +27,42 @@ class ChuDeDetail extends StatelessWidget {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Image
                     Builder(
                       builder: (context) {
-                        const String serverUrl = 'http://10.0.2.2:5084';
                         final String? rawUrl = chuDe.imageUrl;
-                        final String imageUrl = (rawUrl != null && rawUrl.isNotEmpty)
-                            ? (rawUrl.startsWith('http') ? rawUrl : '$serverUrl$rawUrl')
-                            : '';
+                        if (rawUrl == null || rawUrl.isEmpty) {
+                          return const Icon(Icons.image, size: 100, color: Colors.blueAccent);
+                        }
 
-                        return imageUrl.isNotEmpty
-                            ? Image.network(
+                        // Local file check: simply check if it doesn't start with http
+                        // This covers /data/user..., /sdcard/..., or relative paths that we treat as potential files (or will fail gracefully)
+                        bool isLocalFile = !rawUrl.startsWith('http');
+                           
+                        if (isLocalFile) {
+                           return Image.file(
+                               java_io.File(rawUrl),
+                               height: 300, // Tăng kích thước theo yêu cầu
+                               width: double.infinity,
+                               fit: BoxFit.contain, // Giữ tỷ lệ ảnh, hiển thị rõ ràng
+                               errorBuilder: (_, __, ___) => const Column(
+                                 children: [
+                                   Icon(Icons.broken_image, size: 80, color: Colors.red),
+                                   Text("Ảnh lỗi hoặc không tìm thấy", style: TextStyle(color: Colors.grey)),
+                                 ],
+                               ),
+                           );
+                        }
+
+                        const String serverUrl = 'http://10.0.2.2:5084';
+                        final String imageUrl = rawUrl.startsWith('http') ? rawUrl : '$serverUrl$rawUrl';
+
+                        return Image.network(
                                 imageUrl,
-                                height: 150,
+                                height: 300, // Tăng kích thước theo yêu cầu
+                                width: double.infinity,
                                 fit: BoxFit.contain,
                                 errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported, size: 80, color: Colors.grey),
-                              )
-                            : const Icon(Icons.image, size: 100, color: Colors.blueAccent);
+                              );
                       },
                     ),
                     const SizedBox(height: 16),

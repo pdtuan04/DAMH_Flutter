@@ -1,3 +1,4 @@
+import 'dart:io' as java_io;
 import 'package:flutter/material.dart';
 import '../../../models/cau_hoi.dart';
 import '../../../services/loai_bang_lai_api.dart';
@@ -60,6 +61,46 @@ class _CauHoiDetailState extends State<CauHoiDetail> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // Image Display
+             Builder(
+               builder: (context) {
+                 final String? rawUrl = item.mediaUrl;
+                 if (rawUrl == null || rawUrl.isEmpty) {
+                   return const SizedBox.shrink(); // Hide if no image
+                 }
+
+                 // Local file check: simply check if it doesn't start with http
+                 bool isLocalFile = !rawUrl.startsWith('http');
+                    
+                 if (isLocalFile) {
+                    return Padding(
+                      padding: const EdgeInsets.only(bottom: 16.0),
+                      child: Image.file(
+                          java_io.File(rawUrl),
+                          height: 300, 
+                          width: double.infinity,
+                          fit: BoxFit.contain, 
+                          errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                      ),
+                    );
+                 }
+
+                 const String serverUrl = 'http://10.0.2.2:5084';
+                 final String imageUrl = rawUrl.startsWith('http') ? rawUrl : '$serverUrl$rawUrl';
+
+                 return Padding(
+                   padding: const EdgeInsets.only(bottom: 16.0),
+                   child: Image.network(
+                           imageUrl,
+                           height: 300, 
+                           width: double.infinity,
+                           fit: BoxFit.contain,
+                           errorBuilder: (_, __, ___) => const SizedBox.shrink(),
+                         ),
+                 );
+               },
+             ),
+             
             _buildDetailRow('Nội dung:', item.noiDung),
             const Divider(),
             _buildDetailRow('Loại Bằng:', _loaiBangLaiName),

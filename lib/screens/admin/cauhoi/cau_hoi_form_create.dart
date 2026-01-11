@@ -1,3 +1,5 @@
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import '../../../models/cau_hoi.dart';
 import '../../../models/loai_bang_lai.dart';
@@ -5,6 +7,7 @@ import '../../../models/chu_de.dart';
 import '../../../services/cau_hoi_service_api.dart';
 import '../../../services/loai_bang_lai_api.dart';
 import '../../../services/chu_de_service_api.dart';
+import '../../../services/upload_service.dart';
 
 class CauHoiFormCreate extends StatefulWidget {
   final CauHoi? cauHoi; 
@@ -24,6 +27,9 @@ class _CauHoiFormCreateState extends State<CauHoiFormCreate> {
   late TextEditingController _luaChonDController;
   late TextEditingController _giaiThichController;
   late TextEditingController _mediaUrlController; // Added
+  
+  File? _pickedImage;
+  final ImagePicker _picker = ImagePicker();
 
   String _dapAnDung = 'A';
   bool _diemLiet = false;
@@ -70,6 +76,20 @@ class _CauHoiFormCreateState extends State<CauHoiFormCreate> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    try {
+      final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+      if (pickedFile != null) {
+        setState(() {
+          _pickedImage = File(pickedFile.path);
+        });
+      }
+    } catch (e) {
+      print("Lỗi chọn ảnh: $e");
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Không thể chọn ảnh')));
+    }
+  }
+
   Future<void> _loadData() async {
     setState(() => _isLoading = true);
     try {
@@ -96,6 +116,14 @@ class _CauHoiFormCreateState extends State<CauHoiFormCreate> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
+        // Upload image if picked
+        if (_pickedImage != null) {
+          final uploadedPath = await UploadService.uploadImage(_pickedImage!);
+          if (uploadedPath != null) {
+            _mediaUrlController.text = uploadedPath;
+          }
+        }
+
         final newCauHoi = CauHoi(
           id: widget.cauHoi?.id ?? '', 
           noiDung: _noiDungController.text,
@@ -149,74 +177,114 @@ class _CauHoiFormCreateState extends State<CauHoiFormCreate> {
                 child: Column(
                   children: [
                     // Image Preview Area
-                    Container(
-                      width: double.infinity,
-                      margin: const EdgeInsets.only(bottom: 20),
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey.shade300),
-                        borderRadius: BorderRadius.circular(8),
-                      ),
-                      child: Column(
-                        children: [
-                          const Text("Hình ảnh minh họa", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-                          const SizedBox(height: 12),
-                          ClipRRect(
-                            borderRadius: BorderRadius.circular(8),
-                            child: Builder(
-                              builder: (context) {
-                                 const String serverUrl = 'http://10.0.2.2:5084';
-                                 final String rawUrl = _mediaUrlController.text;
-                                 final String imageUrl = (rawUrl.isNotEmpty)
-                                     ? (rawUrl.startsWith('http') ? rawUrl : '$serverUrl$rawUrl')
-                                     : '';
-                                 
-                                 if (imageUrl.isEmpty) {
+                    GestureDetector(
+                      onTap: _pickImage,
+                      child: Container(
+                        width: double.infinity,
+                        margin: const EdgeInsets.only(bottom: 20),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          border: Border.all(color: Colors.grey.shade300),
+                          borderRadius: BorderRadius.circular(8),
+                          color: Colors.grey.shade50,
+                        ),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                const Text("Hình ảnh minh họa", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
+                                TextButton.icon(
+                                  onPressed: _pickImage,
+                                  icon: const Icon(Icons.image),
+                                  label: const Text("Chọn ảnh"),
+                                )
+                              ],
+                            ),
+                            const SizedBox(height: 12),
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(8),
+                              child: Builder(
+                                builder: (context) {
+                                   // 1. New picked image
+                                   if (_pickedImage != null) {
+                                     return Image.file(
+                                       _pickedImage!,
+                                       height: 250,
+                                       width: double.infinity,
+                                       fit: BoxFit.contain,
+                                     );
+                                   }
+
+                                   // 2. Existing image
+                                   const String serverUrl = 'http://10.0.2.2:5084';
+                                   final String rawUrl = _mediaUrlController.text;
+                                   
+                                   if (rawUrl.isNotEmpty) {
+                                      bool isLocalFile = !rawUrl.startsWith('http');
+                                      
+                                      if (isLocalFile) {
+                                        return Image.file(
+                                          File(rawUrl),
+                                          height: 250,
+                                          width: double.infinity,
+                                          fit: BoxFit.contain,
+                                          errorBuilder: (_, __, ___) => const Column(
+                                             mainAxisAlignment: MainAxisAlignment.center,
+                                             children: [
+                                                Icon(Icons.broken_image, size: 40, color: Colors.red),
+                                                Text("Lỗi ảnh (Local)", style: TextStyle(fontSize: 10))
+                                             ],
+                                          ),
+                                        );
+                                      }
+
+                                      final String imageUrl = rawUrl.startsWith('http') ? rawUrl : '$serverUrl$rawUrl';
+                                      return Image.network(
+                                         imageUrl,
+                                         height: 250,
+                                         width: double.infinity,
+                                         fit: BoxFit.contain,
+                                         errorBuilder: (_, __, ___) => const Column(
+                                           mainAxisAlignment: MainAxisAlignment.center,
+                                           children: [
+                                             Icon(Icons.broken_image, size: 40, color: Colors.red),
+                                             Text("Lỗi ảnh (Mạng)", style: TextStyle(fontSize: 10))
+                                           ],
+                                         ),
+                                       );
+                                   }
+                                   
                                    return Container(
                                      height: 150, 
                                      width: double.infinity,
-                                     color: Colors.grey.shade100, 
+                                     color: Colors.grey.shade200, 
                                      child: const Column(
                                        mainAxisAlignment: MainAxisAlignment.center,
                                        children: [
-                                          Icon(Icons.image, size: 50, color: Colors.grey),
+                                          Icon(Icons.add_a_photo, size: 50, color: Colors.grey),
                                           SizedBox(height: 8),
                                           Text("Chưa có ảnh (tùy chọn)", style: TextStyle(color: Colors.grey))
                                        ],
                                      )
                                    );
-                                 }
-                                 
-                                 return Image.network(
-                                   imageUrl,
-                                   height: 200,
-                                   fit: BoxFit.contain,
-                                   errorBuilder: (_, __, ___) => Container(
-                                     height: 150, 
-                                     width: double.infinity,
-                                     color: Colors.grey.shade100,
-                                     child: const Column(
-                                       mainAxisAlignment: MainAxisAlignment.center,
-                                       children: [
-                                         Icon(Icons.broken_image, size: 40, color: Colors.red),
-                                         SizedBox(height: 4),
-                                         Text("Lỗi tải ảnh", style: TextStyle(fontSize: 12))
-                                       ],
-                                     ),
-                                   ),
-                                 );
-                              }
+                                }
+                              ),
                             ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
                     ),
-                    TextFormField(
-                      controller: _mediaUrlController,
-                      decoration: const InputDecoration(
-                        labelText: 'Link Ảnh (URL hoặc đường dẫn tương đối)', 
-                        border: OutlineInputBorder(),
-                        hintText: 'ví dụ: /images/bien_bao_cam.png'
+                    
+                    // Hide manual input
+                    Visibility(
+                      visible: false,
+                      child: TextFormField(
+                        controller: _mediaUrlController,
+                        decoration: const InputDecoration(
+                          labelText: 'Link Ảnh (URL hoặc đường dẫn tương đối)', 
+                          border: OutlineInputBorder(),
+                        ),
                       ),
                     ),
                     const SizedBox(height: 16),

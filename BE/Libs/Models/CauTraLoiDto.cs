@@ -11,6 +11,7 @@ namespace Libs.Models
     {
         public string DapAnDung { get; set; } = string.Empty;
         public string UserDapAn { get; set; } = string.Empty;
+        public string NoiDung { get; set; } = string.Empty;
         public Guid BaiThiId { get; set; }
         public Guid CauHoiId { get; set; }
         public CauHoi CauHoi { get; set; }

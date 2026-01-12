@@ -1,20 +1,53 @@
 import 'dart:io';
+import 'dart:convert';
+import 'package:http/http.dart' as http;
+import 'package:path/path.dart' as path;
 
 class UploadService {
-  /// Giả lập upload ảnh lên server
-  /// Trả về URL (hoặc đường dẫn) của ảnh sau khi upload
-  /// Trong thực tế, bạn sẽ sử dụng http.MultipartRequest để gửi file này đi
+  // Endpoint chính xác lấy từ UploadController.cs
+  static const String _uploadUrl = 'http://10.0.2.2:5084/api/Upload/upload-image';
+
+  /// Upload ảnh lên server
+  /// Trả về đường dẫn (URL relative) của ảnh trên server nếu thành công
   static Future<String?> uploadImage(File file) async {
-    // TODO: Implement actual API upload here
-    // Ví dụ:
-    // var request = http.MultipartRequest('POST', Uri.parse('YOUR_UPLOAD_API'));
-    // request.files.add(await http.MultipartFile.fromPath('image', file.path));
-    // var res = await request.send();
-    // ... parse response to get url
-    
-    // Tạm thời trả về đường dẫn local của file để hiển thị
-    // Chú ý: Đường dẫn local chỉ hoạt động trên thiết bị hiện tại
-    await Future.delayed(const Duration(seconds: 1)); // Fake delay
-    return file.path; 
+    try {
+      final request = http.MultipartRequest('POST', Uri.parse(_uploadUrl));
+      
+      // Param name là 'file'
+      request.files.add(await http.MultipartFile.fromPath(
+        'file', 
+        file.path,
+        filename: path.basename(file.path),
+      ));
+
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+
+      if (response.statusCode == 200) {
+        // Controller trả về: { status: true, message: "...", filePath: "..." }
+        try {
+           final body = jsonDecode(response.body);
+           if (body is Map) {
+             if (body['status'] == true && body.containsKey('filePath')) {
+               return body['filePath'];
+             } else {
+               print("Upload failed logical: ${body['message']}");
+               return null;
+             }
+           }
+           // Fallback
+           return body.toString(); 
+        } catch (e) {
+           print("Error parsing response: $e");
+           return response.body; 
+        }
+      } else {
+        print("Upload failed: ${response.statusCode} - ${response.body}");
+        return null;
+      }
+    } catch (e) {
+      print("Upload error: $e");
+      return null;
+    }
   }
 }

@@ -78,7 +78,11 @@ class _CauHoiFormCreateState extends State<CauHoiFormCreate> {
 
   Future<void> _pickImage() async {
     try {
-      final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85, 
+        maxWidth: 1920,   
+      );
       if (pickedFile != null) {
         setState(() {
           _pickedImage = File(pickedFile.path);
@@ -116,7 +120,6 @@ class _CauHoiFormCreateState extends State<CauHoiFormCreate> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
       try {
-        // Upload image if picked
         if (_pickedImage != null) {
           final uploadedPath = await UploadService.uploadImage(_pickedImage!);
           if (uploadedPath != null) {
@@ -134,7 +137,7 @@ class _CauHoiFormCreateState extends State<CauHoiFormCreate> {
           dapAnDung: _dapAnDung,
           giaiThich: _giaiThichController.text,
           diemLiet: _diemLiet,
-          mediaUrl: _mediaUrlController.text.isNotEmpty ? _mediaUrlController.text : null, // Added
+          mediaUrl: _mediaUrlController.text.isNotEmpty ? _mediaUrlController.text : null, 
           loaiBangLaiId: _selectedLoaiBangLaiId,
           chuDeId: _selectedChuDeId,
         );
@@ -147,7 +150,7 @@ class _CauHoiFormCreateState extends State<CauHoiFormCreate> {
         }
 
         if (success && mounted) {
-          Navigator.pop(context, true); // Return true to refresh list
+          Navigator.pop(context, true); 
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(widget.cauHoi == null ? 'Thêm thành công' : 'Cập nhật thành công')),
           );
@@ -176,7 +179,6 @@ class _CauHoiFormCreateState extends State<CauHoiFormCreate> {
                 key: _formKey,
                 child: Column(
                   children: [
-                    // Image Preview Area
                     GestureDetector(
                       onTap: _pickImage,
                       child: Container(
@@ -206,7 +208,6 @@ class _CauHoiFormCreateState extends State<CauHoiFormCreate> {
                               borderRadius: BorderRadius.circular(8),
                               child: Builder(
                                 builder: (context) {
-                                   // 1. New picked image
                                    if (_pickedImage != null) {
                                      return Image.file(
                                        _pickedImage!,
@@ -216,14 +217,15 @@ class _CauHoiFormCreateState extends State<CauHoiFormCreate> {
                                      );
                                    }
 
-                                   // 2. Existing image
                                    const String serverUrl = 'http://10.0.2.2:5084';
                                    final String rawUrl = _mediaUrlController.text;
                                    
                                    if (rawUrl.isNotEmpty) {
-                                      bool isLocalFile = !rawUrl.startsWith('http');
+                                      bool isNetwork = rawUrl.startsWith('http') || 
+                                                       rawUrl.startsWith('/images/') || 
+                                                       rawUrl.startsWith('/videos/');
                                       
-                                      if (isLocalFile) {
+                                      if (!isNetwork) {
                                         return Image.file(
                                           File(rawUrl),
                                           height: 250,
@@ -276,7 +278,6 @@ class _CauHoiFormCreateState extends State<CauHoiFormCreate> {
                       ),
                     ),
                     
-                    // Hide manual input
                     Visibility(
                       visible: false,
                       child: TextFormField(

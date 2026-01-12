@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../../../models/bai_thi.dart';
 import '../../../models/chu_de.dart';
-import '../../../models/cau_hoi.dart'; // Added import
+import '../../../models/cau_hoi.dart';
 import '../../../services/bai_thi_api.dart';
 import '../../../services/chu_de_service_api.dart';
 import '../../../services/cau_hoi_service_api.dart';
@@ -33,7 +33,7 @@ class _BaiThiDetailState extends State<BaiThiDetail> {
       final results = await Future.wait([
         ApiBaiThiService.getById(widget.baiThi.id),
         ApiChuDeService.getAll(),
-        ApiCauHoiService.getPagedCauHoi(1, 10000), // Fetch all questions to ensure we have full details like chuDeId
+        ApiCauHoiService.getPagedCauHoi(1, 10000), 
       ]);
 
       if (mounted) {
@@ -127,7 +127,6 @@ class _BaiThiDetailState extends State<BaiThiDetail> {
           );
         }
 
-        // Use full details from the map to ensure we have chuDeId and diemLiet
         cauHoi = _getFullQuestion(cauHoi);
 
         return Card(
@@ -160,7 +159,6 @@ class _BaiThiDetailState extends State<BaiThiDetail> {
                 const Divider(),
                 const SizedBox(height: 8),
                 
-                // Topic
                 Row(
                   children: [
                     const Icon(Icons.topic_outlined, size: 16, color: Colors.grey),
@@ -171,7 +169,6 @@ class _BaiThiDetailState extends State<BaiThiDetail> {
                 ),
                 const SizedBox(height: 8),
 
-                // Answer and Paralysis
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [

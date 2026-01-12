@@ -34,20 +34,20 @@ class ChuDeDetail extends StatelessWidget {
                           return const Icon(Icons.image, size: 100, color: Colors.blueAccent);
                         }
 
-                        // Local file check: simply check if it doesn't start with http
-                        // This covers /data/user..., /sdcard/..., or relative paths that we treat as potential files (or will fail gracefully)
-                        bool isLocalFile = !rawUrl.startsWith('http');
+                        bool isNetwork = rawUrl.startsWith('http') || 
+                                         rawUrl.startsWith('/images/') || 
+                                         rawUrl.startsWith('/videos/');
                            
-                        if (isLocalFile) {
+                        if (!isNetwork) {
                            return Image.file(
                                java_io.File(rawUrl),
-                               height: 300, // Tăng kích thước theo yêu cầu
+                               height: 300, 
                                width: double.infinity,
-                               fit: BoxFit.contain, // Giữ tỷ lệ ảnh, hiển thị rõ ràng
+                               fit: BoxFit.contain, 
                                errorBuilder: (_, __, ___) => const Column(
                                  children: [
                                    Icon(Icons.broken_image, size: 80, color: Colors.red),
-                                   Text("Ảnh lỗi hoặc không tìm thấy", style: TextStyle(color: Colors.grey)),
+                                   Text("Ảnh lỗi (Local)", style: TextStyle(color: Colors.grey)),
                                  ],
                                ),
                            );
@@ -58,7 +58,7 @@ class ChuDeDetail extends StatelessWidget {
 
                         return Image.network(
                                 imageUrl,
-                                height: 300, // Tăng kích thước theo yêu cầu
+                                height: 300, 
                                 width: double.infinity,
                                 fit: BoxFit.contain,
                                 errorBuilder: (_, __, ___) => const Icon(Icons.image_not_supported, size: 80, color: Colors.grey),
@@ -67,7 +67,6 @@ class ChuDeDetail extends StatelessWidget {
                     ),
                     const SizedBox(height: 16),
                     
-                    // Title
                     Text(
                       chuDe.tenChuDe,
                       style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blue),
@@ -75,7 +74,6 @@ class ChuDeDetail extends StatelessWidget {
                     ),
                     const SizedBox(height: 8),
                     
-                    // ID
                     Text(
                       'Mã số: ${chuDe.id}',
                       style: const TextStyle(color: Colors.grey, fontSize: 12),
@@ -84,14 +82,14 @@ class ChuDeDetail extends StatelessWidget {
                     const Divider(),
                     const SizedBox(height: 16),
 
-                    // Description Header
+              
                     const Align(
                       alignment: Alignment.centerLeft,
                       child: Text('Mô tả', style: TextStyle(fontWeight: FontWeight.bold)),
                     ),
                     const SizedBox(height: 8),
 
-                    // Description Content
+              
                     Container(
                       width: double.infinity,
                       padding: const EdgeInsets.all(12),
@@ -108,7 +106,7 @@ class ChuDeDetail extends StatelessWidget {
             ),
             const SizedBox(height: 24),
             
-            // Bottom Buttons
+         
             Row(
               children: [
                  Expanded(

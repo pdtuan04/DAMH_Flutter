@@ -47,7 +47,11 @@ class _ChuDeFormCreateState extends State<ChuDeFormCreate> {
 
   Future<void> _pickImage() async {
     try {
-      final XFile? pickedFile = await _picker.pickImage(source: ImageSource.gallery);
+      final XFile? pickedFile = await _picker.pickImage(
+        source: ImageSource.gallery,
+        imageQuality: 85, 
+        maxWidth: 1920,   
+      );
       if (pickedFile != null) {
         setState(() {
           _pickedImage = File(pickedFile.path);
@@ -140,7 +144,6 @@ class _ChuDeFormCreateState extends State<ChuDeFormCreate> {
                         borderRadius: BorderRadius.circular(8),
                         child: Builder(
                           builder: (context) {
-                            // 1. Nếu có ảnh vừa pick từ gallery
                              if (_pickedImage != null) {
                                return Image.file(
                                  _pickedImage!,
@@ -148,14 +151,14 @@ class _ChuDeFormCreateState extends State<ChuDeFormCreate> {
                                  fit: BoxFit.contain,
                                );
                              }
-                            // 2. Nếu chưa pick, check xem có URL cũ không
                              const String serverUrl = 'http://10.0.2.2:5084';
                              final String rawUrl = _imageUrlController.text;
                              
                              if (rawUrl.isNotEmpty) {
-                                bool isLocalFile = !rawUrl.startsWith('http');
-                                
-                                if (isLocalFile) {
+                                bool isNetwork = rawUrl.startsWith('http') || 
+                                                 rawUrl.startsWith('/images/') || 
+                                                 rawUrl.startsWith('/videos/');                         
+                                if (!isNetwork) {
                                   return Image.file(
                                     File(rawUrl),
                                     height: 250,

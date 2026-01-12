@@ -29,7 +29,6 @@ class _CauHoiDetailState extends State<CauHoiDetail> {
       if (widget.cauHoi.loaiBangLaiId != null) {
          final lbls = await ApiLoaiBangLaiService.getAll();
          final found = lbls.firstWhere((e) => e.id == widget.cauHoi.loaiBangLaiId, orElse: () => lbls.first); 
-         // simplistic fallback or handle not found
          if (mounted) setState(() => _loaiBangLaiName = found.tenLoai);
       } else {
          if (mounted) setState(() => _loaiBangLaiName = 'Không có');
@@ -61,18 +60,18 @@ class _CauHoiDetailState extends State<CauHoiDetail> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Image Display
              Builder(
                builder: (context) {
                  final String? rawUrl = item.mediaUrl;
                  if (rawUrl == null || rawUrl.isEmpty) {
-                   return const SizedBox.shrink(); // Hide if no image
+                   return const SizedBox.shrink(); 
                  }
 
-                 // Local file check: simply check if it doesn't start with http
-                 bool isLocalFile = !rawUrl.startsWith('http');
+                 bool isNetwork = rawUrl.startsWith('http') || 
+                                  rawUrl.startsWith('/images/') || 
+                                  rawUrl.startsWith('/videos/');
                     
-                 if (isLocalFile) {
+                 if (!isNetwork) {
                     return Padding(
                       padding: const EdgeInsets.only(bottom: 16.0),
                       child: Image.file(

@@ -161,7 +161,7 @@ class _MoPhongScreenState extends State<MoPhongScreen> {
             child: ElevatedButton(
               onPressed: _hasPressed ? null : _onFlagPressed,
               style: ElevatedButton.styleFrom(backgroundColor: Colors.red, foregroundColor: Colors.white),
-              child: const Text("CẮM CỜ (SPACE)"),
+              child: const Text("CẮM CỜ"),
             ),
           ),
           if (_hasPressed) ...[

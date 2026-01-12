@@ -175,8 +175,14 @@ namespace ET.Controllers.api
                             {
                                 id = ct.CauHoi.Id,
                                 noiDung = ct.CauHoi.NoiDung,
+                                luaChonA = ct.CauHoi.LuaChonA,
+                                luaChonB = ct.CauHoi.LuaChonB,
+                                luaChonC = ct.CauHoi.LuaChonC,
+                                luaChonD = ct.CauHoi.LuaChonD,
                                 dapAnDung = ct.CauHoi.DapAnDung,
+                                diemLiet = ct.CauHoi.DiemLiet,
                                 mediaUrl = ct.CauHoi.MediaUrl,
+                                giaiThich = ct.CauHoi.GiaiThich,
                                 chuDe = ct.CauHoi.ChuDe == null ? null : new
                                 {
                                     id = ct.CauHoi.ChuDe.Id,

@@ -814,6 +814,61 @@ Widget _buildQuestionDetailCard(ChiTietLichSuThi item, int index) {
         
         const SizedBox(height: 8),
         
+        // Media/Image if available
+if (item.mediaUrl != null && item.mediaUrl!.isNotEmpty) ...[
+  Builder(
+    builder: (context) {
+      const String serverUrl = 'http://10.0.2.2:5084';
+      final String imageUrl = item.mediaUrl!.startsWith('http') 
+          ? item.mediaUrl! 
+          : '$serverUrl${item.mediaUrl!}';
+      
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.network(
+          imageUrl,  // ← DÙNG imageUrl ĐÃ ĐƯỢC XỬ LÝ
+          width: double.infinity,
+          fit: BoxFit.contain,
+          errorBuilder: (context, error, stackTrace) {
+            return Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: Colors.grey.shade200,
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(Icons.broken_image, color: Colors.grey.shade400),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Không thể tải hình ảnh',
+                    style: TextStyle(color: Colors.grey.shade600, fontSize: 12),
+                  ),
+                ],
+              ),
+            );
+          },
+          loadingBuilder: (context, child, loadingProgress) {
+            if (loadingProgress == null) return child;
+            return Container(
+              height: 200,
+              alignment: Alignment.center,
+              child: CircularProgressIndicator(
+                value: loadingProgress.expectedTotalBytes != null
+                    ? loadingProgress.cumulativeBytesLoaded /
+                        loadingProgress.expectedTotalBytes!
+                    : null,
+              ),
+            );
+          },
+        ),
+      );
+    },
+  ),
+  const SizedBox(height: 12),
+],
+        
         // Answers
         _buildAnswerOption('A', item.luaChonA, item.dapAnDung, item.cauTraLoi),
         _buildAnswerOption('B', item.luaChonB, item.dapAnDung, item.cauTraLoi),
@@ -869,64 +924,74 @@ Widget _buildAnswerOption(String prefix, String content, String correctAnswer, S
   
   Color bgColor = Colors.transparent;
   Color textColor = Colors.black87;
+  BorderSide borderSide = BorderSide(color: Colors.grey.shade200, width: 1);
   
   if (isCorrect) {
     bgColor = Colors.green.shade50;
     textColor = Colors.green.shade700;
+    borderSide = BorderSide(color: Colors.green.shade300, width: 1.5);
   } else if (isUserChoice && !isCorrect) {
     bgColor = Colors.red.shade50;
     textColor = Colors.red.shade700;
+    borderSide = BorderSide(color: Colors.red.shade300, width: 1.5);
   }
   
   return Container(
-    margin: const EdgeInsets.only(bottom: 4),
-    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+    margin: const EdgeInsets.only(bottom: 6),
+    padding: const EdgeInsets.all(10),
     decoration: BoxDecoration(
       color: bgColor,
-      borderRadius: BorderRadius.circular(6),
-      border: Border.all(
-        color: isCorrect 
-            ? Colors.green.shade200
-            : (isUserChoice ? Colors.red.shade200 : Colors.grey.shade200),
-        width: 1,
-      ),
+      borderRadius: BorderRadius.circular(8),
+      border: Border.fromBorderSide(borderSide),
     ),
     child: Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Container(
-          width: 24,
-          height: 24,
+          width: 28,
+          height: 28,
           alignment: Alignment.center,
           decoration: BoxDecoration(
             color: isCorrect 
                 ? Colors.green 
-                : (isUserChoice ? Colors.red : Colors.grey.shade300),
+                : (isUserChoice ? Colors.red : Colors.grey.shade400),
             shape: BoxShape.circle,
           ),
           child: Text(
             prefix,
             style: TextStyle(
-              color: (isCorrect || isUserChoice) ? Colors.white : Colors.black87,
+              color: Colors.white,
               fontWeight: FontWeight.bold,
-              fontSize: 12,
+              fontSize: 13,
+            ),
+          ),
+        ),
+        const SizedBox(width: 10),
+        Expanded(
+          child: Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: Text(
+              content,
+              style: TextStyle(
+                fontSize: 13,
+                color: textColor,
+                fontWeight: (isCorrect || isUserChoice) ? FontWeight.w600 : FontWeight.normal,
+                height: 1.4,
+              ),
             ),
           ),
         ),
         const SizedBox(width: 8),
-        Expanded(
-          child: Text(
-            content,
-            style: TextStyle(
-              fontSize: 13,
-              color: textColor,
-              fontWeight: (isCorrect || isUserChoice) ? FontWeight.w600 : FontWeight.normal,
-            ),
-          ),
-        ),
         if (isCorrect)
-          const Icon(Icons.check_circle, color: Colors.green, size: 18),
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: const Icon(Icons.check_circle, color: Colors.green, size: 20),
+          ),
         if (isUserChoice && !isCorrect)
-          const Icon(Icons.cancel, color: Colors.red, size: 18),
+          Padding(
+            padding: const EdgeInsets.only(top: 4),
+            child: const Icon(Icons.cancel, color: Colors.red, size: 20),
+          ),
       ],
     ),
   );

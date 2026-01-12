@@ -498,7 +498,7 @@ class _MoPhongFormCreateState extends State<MoPhongFormCreate> {
                             },
                           ),
                           const SizedBox(width: 16),
-                          ElevatedButton.icon(
+                          TextButton.icon(
                             onPressed: _themMocThoiGian,
                             icon: const Icon(Icons.add_location_alt),
                             label: Text('Thêm mốc (${_mocThoiGian.length}/6)'),

@@ -268,6 +268,7 @@ class _LamBaiThiNgauNhienScreenState extends State<LamBaiThiNgauNhienScreen> {
   }
 
   Widget _buildQuestionCard(CauHoi cauHoi, int index) {
+    final String fullUrl = 'http://10.0.2.2:5084${cauHoi.mediaUrl}';
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Card(
@@ -281,6 +282,25 @@ class _LamBaiThiNgauNhienScreenState extends State<LamBaiThiNgauNhienScreen> {
               Text('CÂU HỎI ${index + 1}', style: const TextStyle(color: Colors.indigo, fontWeight: FontWeight.bold)),
               const SizedBox(height: 12),
               Text(cauHoi.noiDung, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold, height: 1.4)),
+              if (cauHoi.mediaUrl != null && cauHoi.mediaUrl!.isNotEmpty)
+                Padding(
+                  padding: const EdgeInsets.symmetric(vertical: 16.0),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(8), // Bo góc ảnh cho đẹp
+                    child: Image.network(
+                      fullUrl,
+                      fit: BoxFit.cover,
+                      width: double.infinity, // Ảnh tràn ngang Card
+                      // Hiện icon loading khi đang tải ảnh
+                      loadingBuilder: (context, child, loadingProgress) {
+                        if (loadingProgress == null) return child;
+                        return const Center(child: CircularProgressIndicator());
+                      },
+                      // Hiện icon lỗi nếu không tải được ảnh
+                      errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                    ),
+                  ),
+                ),
               if (cauHoi.diemLiet)
                 Padding(
                   padding: const EdgeInsets.only(top: 8),

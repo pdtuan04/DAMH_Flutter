@@ -255,9 +255,10 @@ namespace Libs.Repositories
                 {
                     BaiThiId = kq.BaiThiId,
                     CauHoiId = kq.CauHoiId,
+                    NoiDung = cauHoi.NoiDung,
                     UserDapAn = NoiDungDapAn.GetNoiDungDapAn(cauHoi, kq.CauTraLoi),
                     DapAnDung = NoiDungDapAn.GetNoiDungDapAn(cauHoi, kq.DapAnDung),
-                    DungSai = kq.DungSai
+                    DungSai = kq.DungSai,
                 };
             }).ToList();
             return new KetQuaBaiThiDto

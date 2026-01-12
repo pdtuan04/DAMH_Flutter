@@ -53,6 +53,7 @@ namespace ET.Controllers.api
                     {
                         kq.CauHoiId,
                         kq.UserDapAn,
+                        kq.NoiDung,
                         kq.DapAnDung,
                         kq.DungSai
                     }),

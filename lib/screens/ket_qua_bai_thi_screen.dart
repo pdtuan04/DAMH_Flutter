@@ -65,33 +65,31 @@ class KetQuaBaiThiScreen extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.all(8.0),
                     child: ListTile(
-                      leading: CircleAvatar(
-                        backgroundColor: item.dungSai ? Colors.green.withOpacity(0.1) : Colors.red.withOpacity(0.1),
-                        child: Text(
-                          "${index + 1}",
-                          style: TextStyle(
-                              color: item.dungSai ? Colors.green : Colors.red,
-                              fontWeight: FontWeight.bold
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      title: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 1. Nội dung câu hỏi (Hiện rõ ràng nhất)
+                          Text(
+                            item.noiDung,
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                           ),
-                        ),
-                      ),
-                      title: RichText(
-                        text: TextSpan(
-                          style: const TextStyle(color: Colors.black87, fontSize: 15),
-                          children: [
-                            const TextSpan(text: "Bạn chọn: "),
-                            TextSpan(
-                              text: userChoice,
-                              style: TextStyle(
-                                fontWeight: FontWeight.bold,
-                                color: isSkipped ? Colors.orange.shade700 : (item.dungSai ? Colors.green : Colors.red),
-                              ),
+                          const SizedBox(height: 4),
+
+                          // 2. Câu trả lời của người dùng
+                          Text(
+                            "Bạn chọn: $userChoice",
+                            style: TextStyle(
+                              fontSize: 14,
+                              // Đổi màu trực tiếp dựa trên đúng/sai/bỏ qua
+                              color: isSkipped ? Colors.orange.shade700 : (item.dungSai ? Colors.green : Colors.red),
+                              fontWeight: FontWeight.w500,
                             ),
-                          ],
-                        ),
+                          ),
+                        ],
                       ),
                       subtitle: Padding(
-                        padding: const EdgeInsets.only(top: 6),
+                        padding: const EdgeInsets.only(top: 4),
                         child: Text(
                           "Đáp án đúng: ${item.dapAnDung}",
                           style: TextStyle(color: Colors.blueGrey.shade600),
@@ -100,8 +98,9 @@ class KetQuaBaiThiScreen extends StatelessWidget {
                       trailing: Icon(
                         item.dungSai ? Icons.check_circle_rounded : Icons.cancel_rounded,
                         color: item.dungSai ? Colors.green : Colors.red,
+                        size: 28,
                       ),
-                    ),
+                    )
                   ),
                 );
               },

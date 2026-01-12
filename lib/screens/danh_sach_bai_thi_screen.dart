@@ -145,7 +145,7 @@ class _DanhSachBaiThiScreenState extends State<DanhSachBaiThiScreen> {
                   children: [
                     const SizedBox(height: 5),
                     Text('Số lượng: ${baiThi.chiTietBaiThis.length} câu hỏi'),
-                    Text('Thời gian: 20 phút', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
+                    Text('Thời gian: 19 phút', style: TextStyle(color: Colors.grey[600], fontSize: 13)),
                   ],
                 ),
                 trailing: const Icon(Icons.play_circle_fill, color: Colors.orange, size: 35),

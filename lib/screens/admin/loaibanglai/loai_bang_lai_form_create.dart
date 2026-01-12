@@ -70,7 +70,8 @@ class _LoaiBangLaiFormCreateState extends State<LoaiBangLaiFormCreate> {
 
     return Scaffold(
       appBar: AppBar(title: Text(title)),
-      body: Padding(
+      body: SingleChildScrollView(
+      child: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Form(
           key: _formKey,
@@ -118,6 +119,7 @@ class _LoaiBangLaiFormCreateState extends State<LoaiBangLaiFormCreate> {
           ),
         ),
       ),
+    )
     );
   }
 }

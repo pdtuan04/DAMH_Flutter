@@ -26,7 +26,7 @@ class _OnToanBoCauHoiScreenState extends State<OnToanBoCauHoiScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text("Ôn tập các câu hỏi hay sai"),
+        title: Text("Ôn tập toàn bộ câu hỏi"),
         backgroundColor: Colors.indigo,
         foregroundColor: Colors.white,
       ),

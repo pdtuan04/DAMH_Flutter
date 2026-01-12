@@ -61,6 +61,7 @@ class KetQuaNopBai {
 
 class ChiTietKetQua {
   final String cauHoiId;
+  final String noiDung;
   final String userDapAn;
   final String dapAnDung;
   final bool dungSai;
@@ -70,6 +71,7 @@ class ChiTietKetQua {
     required this.userDapAn,
     required this.dapAnDung,
     required this.dungSai,
+    required this.noiDung
   });
 
   factory ChiTietKetQua.fromJson(Map<String, dynamic> json) {
@@ -78,6 +80,7 @@ class ChiTietKetQua {
       userDapAn: json['userDapAn'] ?? '',
       dapAnDung: json['dapAnDung'] ?? '',
       dungSai: json['dungSai'] ?? false,
+      noiDung: json['noiDung'] ?? '',
     );
   }
 }

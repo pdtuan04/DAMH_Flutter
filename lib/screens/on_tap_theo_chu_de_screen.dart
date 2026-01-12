@@ -332,6 +332,7 @@ class _CauHoiOnTapScreenState extends State<CauHoiOnTapScreen> {
   }
 
   Widget _buildQuestionItem(CauHoi cauHoi, int index, int total) {
+    final String fullUrl = 'http://10.0.2.2:5084${cauHoi.mediaUrl}';
     bool hasAnswered = _userSelections.containsKey(index);
     bool isCompleted = _completedQuestions.contains(cauHoi.id);
 
@@ -363,6 +364,25 @@ class _CauHoiOnTapScreenState extends State<CauHoiOnTapScreen> {
             cauHoi.noiDung,
             style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w500),
           ),
+          if (cauHoi.mediaUrl != null && cauHoi.mediaUrl!.isNotEmpty)
+            Padding(
+              padding: const EdgeInsets.symmetric(vertical: 16.0),
+              child: ClipRRect(
+                borderRadius: BorderRadius.circular(8), // Bo góc ảnh cho đẹp
+                child: Image.network(
+                  fullUrl,
+                  fit: BoxFit.cover,
+                  width: double.infinity, // Ảnh tràn ngang Card
+                  // Hiện icon loading khi đang tải ảnh
+                  loadingBuilder: (context, child, loadingProgress) {
+                    if (loadingProgress == null) return child;
+                    return const Center(child: CircularProgressIndicator());
+                  },
+                  // Hiện icon lỗi nếu không tải được ảnh
+                  errorBuilder: (context, error, stackTrace) => const Icon(Icons.broken_image, size: 50, color: Colors.grey),
+                ),
+              ),
+            ),
           const SizedBox(height: 20),
           _buildOption(cauHoi, index, "A", cauHoi.luaChonA),
           _buildOption(cauHoi, index, "B", cauHoi. luaChonB),

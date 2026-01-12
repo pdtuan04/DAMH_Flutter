@@ -15,6 +15,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.AI;
 using Microsoft.IdentityModel.Tokens;
+using Microsoft.AspNetCore.Http.Features;
 using sendMail.Service;
 using System.Text;
 
@@ -36,6 +37,20 @@ builder.Services.AddControllers()
         opt.JsonSerializerOptions.ReferenceHandler = System.Text.Json.Serialization.ReferenceHandler.IgnoreCycles;
         opt.JsonSerializerOptions.WriteIndented = true;
     });
+builder.Services.Configure<FormOptions>(options =>
+{
+    options.ValueLengthLimit = int.MaxValue;
+    options.MultipartBodyLengthLimit = long.MaxValue; // Không giới hạn
+    options.MultipartHeadersLengthLimit = int.MaxValue;
+});
+
+// Thêm config cho Kestrel server
+builder.WebHost.ConfigureKestrel(serverOptions =>
+{
+    serverOptions.Limits.MaxRequestBodySize = null; // Không giới hạn
+    serverOptions.Limits.KeepAliveTimeout = TimeSpan.FromMinutes(30);
+    serverOptions.Limits.RequestHeadersTimeout = TimeSpan.FromMinutes(30);
+});
 
 builder.Services.AddIdentity<User, IdentityRole>()
                 .AddEntityFrameworkStores<ApplicationDbContext>()

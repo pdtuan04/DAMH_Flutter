@@ -44,6 +44,9 @@ dependencies:
   audio_video_progress_bar: ^2.0.3
   provider: ^6.1.5+1
   uuid: ^4.4.0
+  file_picker: ^10.3.8
+  dio: ^5.4.0
+  permission_handler: ^11.3.0
 
 dev_dependencies:
   flutter_test:

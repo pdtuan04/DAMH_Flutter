@@ -10,6 +10,8 @@ import 'package:damh_flutter/screens/admin/loaibanglai/quanly_loai_bang_lai.dart
 import 'package:damh_flutter/screens/admin/chude/quanly_chu_de.dart';
 import 'package:damh_flutter/screens/admin/cauhoi/quanly_cau_hoi.dart';
 import 'package:damh_flutter/screens/admin/baithi/quanly_bai_thi.dart';
+import 'screens/admin/mophong/quanly_mo_phong.dart';
+import 'package:damh_flutter/screens/admin/user/quan_ly_user.dart';
 import 'package:flutter/material.dart';
 void main() {
   runApp(MyApp());
@@ -28,10 +30,12 @@ class MyApp extends StatelessWidget {
         '/register': (context) => RegisterScreen(),
         '/ontaptheochude': (context) => OnTapTheoChuDeScreen(),
         '/admin': (context) => AdminHomeScreen(),
+        '/admin/user': (context) => const QuanLyUser(),
         '/admin/loai-bang-lai': (context) => QuanLyLoaiBangLai(),
         '/admin/chu-de': (context) => QuanLyChuDe(),
         '/admin/cau-hoi': (context) => QuanLyCauHoi(),
         '/admin/bai-thi': (context) => QuanLyBaiThi(),
+        '/admin/mo-phong': (context) => const QuanLyMoPhong(),
         '/random-de-thi': (context) => LamBaiThiNgauNhienScreen(),
         '/on-cau-hoi-hay-sai': (context) => CauHoiHaySaiScreen(),
         '/on-toan-bo-cau-hoi': (context) => OnToanBoCauHoiScreen(),

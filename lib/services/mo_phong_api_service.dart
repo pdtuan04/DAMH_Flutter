@@ -2,6 +2,8 @@ import 'dart:convert';
 import 'package:damh_flutter/models/mo_phong.dart';
 import 'package:http/http.dart' as http;
 import '../models/chu_de.dart';
+import 'authenticate.dart';
+
 
 
 class ApiMoPhongService {
@@ -41,6 +43,74 @@ class ApiMoPhongService {
       }
     } catch (e) {
       throw Exception("Lỗi kết nối mạng: $e");
+    }
+  }
+
+    // Tạo mới mô phỏng
+  static Future<bool> create(MoPhong moPhong) async {
+    try {
+      final token = await TokenService.getToken();
+      final res = await http.post(
+        Uri.parse('$baseUrl/create'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(moPhong.toJson()),
+      );
+
+      if (res.statusCode == 200) {
+        final jsonData = jsonDecode(res.body);
+        return jsonData['status'] == true;
+      }
+      return false;
+    } catch (e) {
+      throw Exception("Lỗi tạo mô phỏng: $e");
+    }
+  }
+
+  // Cập nhật mô phỏng
+  static Future<bool> update(MoPhong moPhong) async {
+    try {
+      final token = await TokenService.getToken();
+      final res = await http.put(
+        Uri.parse('$baseUrl/update'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+        body: jsonEncode(moPhong.toJson()),
+      );
+
+      if (res.statusCode == 200) {
+        final jsonData = jsonDecode(res.body);
+        return jsonData['status'] == true;
+      }
+      return false;
+    } catch (e) {
+      throw Exception("Lỗi cập nhật mô phỏng: $e");
+    }
+  }
+
+  // Xóa mô phỏng
+  static Future<bool> delete(String id) async {
+    try {
+      final token = await TokenService.getToken();
+      final res = await http.delete(
+        Uri.parse('$baseUrl/delete/$id'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer $token',
+        },
+      );
+
+      if (res.statusCode == 200) {
+        final jsonData = jsonDecode(res.body);
+        return jsonData['status'] == true;
+      }
+      return false;
+    } catch (e) {
+      throw Exception("Lỗi xóa mô phỏng: $e");
     }
   }
 }

@@ -174,8 +174,8 @@ static Future<LichSuThiStats> getLichSuThiStats() async {
 static Future<LichSuThiDetail?> getChiTietLichSuThi(String lichSuThiId) async {
   String? token = await TokenService.getToken();
   try {
-    print('🔍 Đang gọi API với ID: $lichSuThiId');
-    print('🔑 Token: ${token?.substring(0, 20)}...');
+    print('Đang gọi API với ID: $lichSuThiId');
+    print('Token: ${token?.substring(0, 20)}...');
     
     // SỬA: Đổi endpoint từ BaiThi sang LichSuThi
     final res = await http.get(
@@ -187,37 +187,37 @@ static Future<LichSuThiDetail?> getChiTietLichSuThi(String lichSuThiId) async {
     ).timeout(
       const Duration(seconds: 10),
       onTimeout: () {
-        print('⏱️ Request timeout sau 10 giây');
+        print('Request timeout sau 10 giây');
         throw Exception('Request timeout');
       },
     );
 
-    print('📡 Chi tiết Status Code: ${res.statusCode}');
-    print('📄 Chi tiết Response: ${res.body}');
+    print('Chi tiết Status Code: ${res.statusCode}');
+    print('Chi tiết Response: ${res.body}');
 
     if (res.statusCode == 200) {
       final jsonData = json.decode(res.body);
-      print('✅ JSON Data: $jsonData');
+      print('JSON Data: $jsonData');
       
       // SỬA: Đổi từ 'success' sang 'status'
       if (jsonData['status'] == true && jsonData['data'] != null) {
         return LichSuThiDetail.fromJson(jsonData['data']);
       } else {
-        print('⚠️ Status = false hoặc data = null');
+        print('Status = false hoặc data = null');
         return null;
       }
     } else if (res.statusCode == 401) {
-      print('❌ Unauthorized - Token hết hạn hoặc không hợp lệ');
+      print('Unauthorized - Token hết hạn hoặc không hợp lệ');
       return null;
     } else if (res.statusCode == 404) {
-      print('❌ Not Found - Endpoint không tồn tại hoặc ID không tìm thấy');
+      print('Not Found - Endpoint không tồn tại hoặc ID không tìm thấy');
       return null;
     } else {
-      print('❌ Lỗi khác: ${res.statusCode}');
+      print('Lỗi khác: ${res.statusCode}');
       return null;
     }
   } catch (e, stackTrace) {
-    print('💥 Exception getting detail: $e');
+    print('Exception getting detail: $e');
     print('Stack trace: $stackTrace');
     return null;
   }

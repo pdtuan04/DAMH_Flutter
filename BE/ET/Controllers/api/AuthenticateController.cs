@@ -50,7 +50,8 @@ namespace ETAuthApp.Controllers.api
             User user = new()
             {
                 UserName = model.Username,
-                Email = model.Email
+                Email = model.Email,
+                CreatedAt = DateTime.UtcNow
             };
 
             var createUserResult = await userManager.CreateAsync(user, model.Password);

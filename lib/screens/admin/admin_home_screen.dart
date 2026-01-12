@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../services/authenticate.dart';
+import 'mophong/quanly_mo_phong.dart';
 
 class AdminHomeScreen extends StatelessWidget {
   const AdminHomeScreen({super.key});
@@ -28,6 +29,13 @@ class AdminHomeScreen extends StatelessWidget {
           children: [
             _buildAdminCard(
               context,
+              'Quản lý Người Dùng',
+              Icons.people,
+              Colors.teal,
+                  () => Navigator.pushNamed(context, '/admin/user'),
+            ),
+            _buildAdminCard(
+              context,
               'Quản lý Loại Bằng Lái',
               Icons.card_membership,
               Colors.orange,
@@ -53,6 +61,13 @@ class AdminHomeScreen extends StatelessWidget {
               Icons.assignment,
               Colors.purple,
                   () => Navigator.pushNamed(context, '/admin/bai-thi'),
+            ),
+            _buildAdminCard(
+              context,
+              'Quản lý Mô Phỏng',
+              Icons.video_library,
+              Colors.red,
+                  () => Navigator.pushNamed(context, '/admin/mo-phong'),
             ),
           ],
         ),
